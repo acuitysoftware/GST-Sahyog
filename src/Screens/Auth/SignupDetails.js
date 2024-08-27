@@ -111,6 +111,7 @@ const SignupDetails = () => {
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business address</Text>
                 <AppTextInput
+                  multiline={true}
                     numberOfLines={6}
                     inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}

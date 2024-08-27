@@ -56,6 +56,8 @@ const Profile = () => {
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Enter  Phone Number'
+                    maxLength={10}
+                    keyboardType='phone-pad'
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                 <AppTextInput

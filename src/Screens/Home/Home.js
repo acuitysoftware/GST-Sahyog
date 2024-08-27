@@ -7,6 +7,7 @@ import { moderateScale } from '../../Constants/PixelRatio';
 import { FONTS } from '../../Constants/Fonts';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
+import NavigationService from '../../Services/Navigation';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -35,8 +36,9 @@ const Home = () => {
             <HomeHeader />
             <ScrollView showsVerticalScrollIndicator={false}>
                 <Image source={require('../../assets/images/homebanner.png')} style={styles.banner_sty} />
+
                 <View style={styles.total_view}>
-                    <Card style={styles.box_view}>
+                    <Card onPress={()=>NavigationService.navigate('CreateInvoice')} style={styles.box_view}>
                         <View style={styles.main_view}>
                             <View style={{ ...styles.image_backgroung, backgroundColor: 'rgba(22, 79, 230, 0.17)' }}>
                                 <Image source={require('../../assets/images/homeinvoice.png')}
