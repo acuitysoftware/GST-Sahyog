@@ -1,97 +1,94 @@
 //import liraries
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
-import { AppButton, AppTextInput, useTheme } from 'react-native-basic-elements';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
-const AddCustomerFrom = () => {
+const AddProductFrom = () => {
     const colors = useTheme()
     return (
         <View style={styles.container}>
-            <BackHeader title='Add Customer' />
+            <BackHeader title='Add Product' />
             <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
                 <View style={{ backgroundColor: colors.secondaryThemeColor, paddingBottom: moderateScale(10) }}>
-                    <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
+                    <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Product Details</Text>
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Enter Name'
+                    // placeholder='Enter Name'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone Number </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>MRP</Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Enter Number'
-                        maxLength={10}
                         keyboardType='phone-pad'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Discounted Price </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Enter email'
-                    />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Pin </Text>
-                    <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Enter Pin'
                         keyboardType='phone-pad'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
-                    <AppTextInput
-                        multiline={true}
-                        numberOfLines={4}
-                        inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
-                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Address'
-                        textAlignVertical='top'
-                    />
-                </View>
-                <View style={{ backgroundColor: colors.secondaryThemeColor, marginTop:moderateScale(10),paddingBottom: moderateScale(10) }}>
-                    <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Taxable value </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Enter GST Number'
+                        keyboardType='phone-pad'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Name </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>HSN Code </Text>
+                    <View style={styles.hsn_view}>
+                        <AppTextInput
+                            inputContainerStyle={{ ...styles.HNSinputcontainer_sty }}
+                            inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                            keyboardType='phone-pad'
+                        />
+                        <Pressable style={{ ...styles.hns_seacrch_view, backgroundColor: colors.buttonColor }}>
+                            <Icon name='search' type='Fontisto' color={colors.secondaryThemeColor} />
+                        </Pressable>
+                    </View>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>CGST </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                        keyboardType='phone-pad'
+                        placeholder='9%'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Email </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>SGST </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                        keyboardType='phone-pad'
+                        placeholder='9%'
                     />
-                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Phone </Text>
-                    <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
-                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        maxLength={10}
-                        keyboardType='number-pad'
-                    />
-                   <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Address </Text>
-                    <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
-                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    />
-                </View>
-                <AppButton
-                    textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
-                    style={styles.button_sty}
-                    title="Add Customer"
-                />
-            </KeyboardAwareScrollView>
 
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>cess </Text>
+                    <AppTextInput
+                        inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                        keyboardType='phone-pad'
+                        placeholder='4%'
+                    />
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Product Price </Text>
+                    <AppTextInput
+                        inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                        keyboardType='phone-pad'
+                    />
+
+                    <AppButton
+                        textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
+                        style={styles.button_sty}
+                        title="Add Customer"
+                    />
+
+                </View>
+            </KeyboardAwareScrollView>
         </View>
     );
 };
@@ -114,7 +111,7 @@ const styles = StyleSheet.create({
         marginTop: moderateScale(10)
     },
     inputcontainer_sty: {
-        borderWidth: 1,
+        borderWidth: 0,
         alignSelf: 'center',
         height: moderateScale(45),
         borderRadius: moderateScale(5),
@@ -122,17 +119,27 @@ const styles = StyleSheet.create({
         paddingLeft: moderateScale(7),
         marginHorizontal: moderateScale(15)
     },
-    address_inputcontainer_sty: {
+    hsn_view: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginHorizontal: moderateScale(15),
+    },
+    HNSinputcontainer_sty: {
         borderWidth: 1,
         alignSelf: 'center',
+        height: moderateScale(45),
         borderRadius: moderateScale(5),
         borderWidth: 1,
         paddingLeft: moderateScale(7),
-        marginHorizontal: moderateScale(15)
+        width: moderateScale(250)
     },
-    text_input: {
-        fontFamily: FONTS.Jost.medium,
-        fontSize: moderateScale(12)
+    hns_seacrch_view: {
+        height: moderateScale(44),
+        width: moderateScale(44),
+        borderRadius: moderateScale(7),
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     buttn_txt: {
         fontFamily: FONTS.Jost.semibold,
@@ -143,10 +150,10 @@ const styles = StyleSheet.create({
         width: width - moderateScale(40),
         borderRadius: moderateScale(7),
         alignSelf: 'center',
-        marginTop: moderateScale(20),
+        marginTop: moderateScale(30),
         marginBottom: moderateScale(20)
     },
 });
 
 //make this component available to the app
-export default AddCustomerFrom;
+export default AddProductFrom;

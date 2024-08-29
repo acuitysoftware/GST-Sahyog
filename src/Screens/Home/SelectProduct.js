@@ -1,17 +1,18 @@
+
 //import liraries
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import BackHeader from '../../Components/Header/BackHeader';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
-import CastomerList from '../../Components/CastomerCard/CastomerList';
+import BackHeader from '../../Components/Header/BackHeader';
+import SelectProductList from '../../Components/HomeCard/SelectProductList';
 
 // create a component
-const Customer = () => {
+const SelectProduct = () => {
     const colors = useTheme()
     return (
         <View style={styles.container}>
-            <BackHeader title='Select Customer' />
+            <BackHeader title='Select Product' />
             <View style={{...styles.search_view,backgroundColor:colors.secondaryThemeColor}}>
                 <AppTextInput
                     placeholder="Search..."
@@ -37,7 +38,7 @@ const Customer = () => {
                 showsVerticalScrollIndicator={false}
                 data={[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
                 renderItem={({ item, index }) => (
-                    <CastomerList item={item} index={index} />
+                    <SelectProductList item={item} index={index} />
                 )}
                 keyExtractor={(item, index) => index.toString()}
             />
@@ -68,4 +69,5 @@ const styles = StyleSheet.create({
 });
 
 //make this component available to the app
-export default Customer;
+export default SelectProduct;
+
