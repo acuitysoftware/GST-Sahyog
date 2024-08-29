@@ -8,15 +8,64 @@ import { FONTS } from '../../Constants/Fonts';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import NavigationService from '../../Services/Navigation';
 import Modal from "react-native-modal";
+import { useRoute } from '@react-navigation/native';
+import AuthService from '../../Services/Auth';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const SignupDetails = () => {
     const colors = useTheme()
+    const route = useRoute()
+    const regData = route.params.allData
+    console.log('resssssssssssssssssssssss=========================', regData);
+    const [signature, setsignature] = useState('')
+    const [name, setName] = useState('')
+    const [mobile, setMobile] = useState(regData?.mobile_no)
+    const [email, setemail] = useState('')
+    const [password, setpassword] = useState('')
+    const [Cnfpassword, setCnfpassword] = useState('')
+
     const [isModalVisible, setModalVisible] = useState(false);
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
     };
+
+    const validateMobile = (mobile) => {
+        const regex = /^[6-9]\d{9}$/;
+        return regex.test(mobile);
+    };
+
+    const getSignupDetails = () => {
+        let data = {
+            "image":"",
+            "gst_no": regData?.gst_no || " " ,
+            "mobile_no": mobile,
+            "auth_signature": signature,
+            "name": name,
+            "phone": mobile,
+            "email": email,
+            "password": password
+        }
+        console.log('resdaaaaaaaaaaaa', data);
+        // setButtonLoader(true)
+        // AuthService.setSignUpDetails(data)
+        //     .then((res) => {
+        //         if (res) {
+        //             setButtonLoader(false);
+        //             Toast.show(res.message);
+        //             NavigationService.navigate('Login');
+        //         } else {
+        //             Toast.show(res.message,);
+        //             setButtonLoader(false);
+        //         }
+        //     })
+        //     .catch((err) => {
+        //         setButtonLoader(false);
+        //         console.log('errrr', err);
+        //         // Toast.show('An error occurred. Please try again.');
+        //     });
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar
@@ -44,36 +93,49 @@ const SignupDetails = () => {
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Enter Name'
+                    value={signature}
+                    onChangeText={(val) => setsignature(val)}
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name</Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Enter Name'
+                    value={name}
+                    onChangeText={(val) => setName(val)}
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone</Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter  Phone Number'
+                    value={mobile}
+                    onChangeText={(val) => setMobile(val)}
+                    editable={false}
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email</Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Enter  Email'
+                    value={email}
+                    onChangeText={(val) => setemail(val)}
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Password</Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Password'
+                    value={password}
+                    onChangeText={(val) => setpassword(val)}
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Confirm Password</Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     placeholder='Confirm Password'
+                    value={Cnfpassword}
+                    onChangeText={(val) => setCnfpassword(val)}
+
                 />
                 <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
                 <View style={styles.img_view}>
@@ -111,7 +173,7 @@ const SignupDetails = () => {
                 />
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business address</Text>
                 <AppTextInput
-                  multiline={true}
+                    multiline={true}
                     numberOfLines={6}
                     inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
@@ -123,7 +185,8 @@ const SignupDetails = () => {
                     textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                     style={styles.button_sty}
                     title="Submit"
-                    onPress={toggleModal}
+                    // onPress={toggleModal}
+                    onPress={()=>getSignupDetails()}
                 />
 
             </KeyboardAwareScrollView>
@@ -134,13 +197,13 @@ const SignupDetails = () => {
             >
                 <View style={styles.modalView}>
                     <Image source={require('../../assets/images/successlogo.png')} style={{ height: 60, width: 60 }} />
-                    <Text style={{...styles.modal_massege,color:colors.primaryFontColor}}>Registration  Successful</Text>
+                    <Text style={{ ...styles.modal_massege, color: colors.primaryFontColor }}>Registration  Successful</Text>
 
                     <TouchableOpacity
                         onPress={() => NavigationService.navigate('UserStack')}
-                        style={{...styles.modalbutton_sty,backgroundColor:colors.buttonColor}}>
+                        style={{ ...styles.modalbutton_sty, backgroundColor: colors.buttonColor }}>
 
-                        <Text style={{...styles.button_txt_sty, color: colors.buttontxtColor}}>Ok</Text>
+                        <Text style={{ ...styles.button_txt_sty, color: colors.buttontxtColor }}>Ok</Text>
 
 
                     </TouchableOpacity>

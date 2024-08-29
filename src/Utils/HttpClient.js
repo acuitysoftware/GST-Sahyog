@@ -2,8 +2,8 @@ import AuthService from '../Services/Auth';
 import MainStorage from '../Utils/MainStorage';
 import { MAIN_BASE_URL } from './EnvVariables';
 
-const BASE_URL = `https://acuitysoftware.co/digi-help-app/api`;
-const MAINIMAGEURL = "https://acuitysoftware.co/digi-help-app/api";
+const BASE_URL = `https://sahyog.acuitysoftware.in/sahyog`;
+const MAINIMAGEURL = "https://sahyog.acuitysoftware.in/sahyog";
 
 function get(endpoint, params) {
     return request(endpoint, params);

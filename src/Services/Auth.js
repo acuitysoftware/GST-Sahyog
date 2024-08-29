@@ -15,15 +15,20 @@ async function getToken() {
     return await MainStorage.get('token');
 }
 
-const getSendOtp = async (data) => {
-    return HttpClient.post('/send-otp', data);
+const setSignUp = async (data) => {
+    return HttpClient.post('/registration.php', data);
+}
+const setSignUpDetails = async (data) => {
+    return HttpClient.post('/user_update.php', data);
 }
 
 const AuthService = {
     getAccount,
     setAccount,
-    getSendOtp,
-
+    setToken,
+    getToken,
+    setSignUp,
+    setSignUpDetails
 }
 
 export default AuthService;

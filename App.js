@@ -14,6 +14,7 @@ const Stack = createStackNavigator();
 // create a component
 const App = () => {
   const [isDark, setIsDark] = useState(false);
+  
 
   return (
     <SafeAreaProvider>
