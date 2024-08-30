@@ -202,7 +202,10 @@ const CreateInvoice = () => {
                 </TouchableOpacity>
                 {/* =========================================================END=========================== */}
 
-                <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+              
+
+            </ScrollView>
+            <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
                  <Text style={{...styles.total_txt,color:colors.secondaryFontColor}}>Total  <Text>₹ 0.00</Text></Text>
                  <Pressable 
                  onPress={()=>NavigationService.navigate('InvoicePdfScreen')}
@@ -216,8 +219,6 @@ const CreateInvoice = () => {
                     }}>Generate</Text>
                  </Pressable>
                 </View>
-
-            </ScrollView>
 
             <Modal
                 isVisible={ShippingChargeModal}
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         marginTop: moderateScale(10),
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     number_up_down_view: {
         flexDirection: 'row',

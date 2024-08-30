@@ -17,7 +17,6 @@ const SelectProductList = ({ item, index }) => {
                     <Text style={{ ...styles.webskill_number, color: colors.buttonColor }}>₹100.00</Text>
                 </View>
                 <Pressable
-                onPress={()=>NavigationService.navigate('AddProductFrom')}
                 style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
                     <Text style={{ ...styles.addbtn_txt,color:colors.secondaryThemeColor }}>Add</Text>
                 </Pressable>

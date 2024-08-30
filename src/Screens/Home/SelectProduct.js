@@ -1,11 +1,12 @@
 
 //import liraries
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import BackHeader from '../../Components/Header/BackHeader';
 import SelectProductList from '../../Components/HomeCard/SelectProductList';
+import NavigationService from '../../Services/Navigation';
 
 // create a component
 const SelectProduct = () => {
@@ -29,9 +30,9 @@ const SelectProduct = () => {
                         paddingLeft:moderateScale(10)
                     }}
                 />
-                <View style={{...styles.add_button,backgroundColor:colors.buttonColor}}>
+                <TouchableOpacity  onPress={()=>NavigationService.navigate('AddProductFrom')} style={{...styles.add_button,backgroundColor:colors.buttonColor}}>
                     <Icon name='plus' type='AntDesign' color={colors.secondaryThemeColor}/>
-                </View>
+                </TouchableOpacity>
             </View>
             <View style={{marginBottom:moderateScale(90)}}>
             <FlatList

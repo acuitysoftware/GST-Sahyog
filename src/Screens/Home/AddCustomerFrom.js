@@ -1,11 +1,11 @@
 //import liraries
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import BackHeader from '../../Components/Header/BackHeader';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { AppButton, AppTextInput, useTheme } from 'react-native-basic-elements';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import CustomerHeader from '../../Components/Header/CustomerHeader';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -13,7 +13,7 @@ const AddCustomerFrom = () => {
     const colors = useTheme()
     return (
         <View style={styles.container}>
-            <BackHeader title='Add Customer' />
+            <CustomerHeader title='Add Customer' />
             <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
                 <View style={{ backgroundColor: colors.secondaryThemeColor, paddingBottom: moderateScale(10) }}>
                     <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
