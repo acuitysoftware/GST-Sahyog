@@ -1,17 +1,19 @@
 //import liraries
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import BackHeader from '../../Components/Header/BackHeader';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import CastomerList from '../../Components/CastomerCard/CastomerList';
+import CustomerHeader from '../../Components/Header/CustomerHeader';
+import NavigationService from '../../Services/Navigation';
+import { TouchableOpacity } from 'react-native';
 
 // create a component
 const Customer = () => {
     const colors = useTheme()
     return (
         <View style={styles.container}>
-            <BackHeader title='Select Customer' />
+            <CustomerHeader title='Select Customer' />
             <View style={{...styles.search_view,backgroundColor:colors.secondaryThemeColor}}>
                 <AppTextInput
                     placeholder="Search..."
@@ -28,9 +30,9 @@ const Customer = () => {
                         paddingLeft:moderateScale(10)
                     }}
                 />
-                <View style={{...styles.add_button,backgroundColor:colors.buttonColor}}>
+                <TouchableOpacity onPress={() => NavigationService.navigate('AddCustomerFrom')} style={{...styles.add_button,backgroundColor:colors.buttonColor}}>
                     <Icon name='plus' type='AntDesign' color={colors.secondaryThemeColor}/>
-                </View>
+                </TouchableOpacity>
             </View>
             <View style={{marginBottom:moderateScale(90)}}>
             <FlatList

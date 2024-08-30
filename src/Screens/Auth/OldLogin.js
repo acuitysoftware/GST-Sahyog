@@ -23,15 +23,26 @@ const OldLogin = () => {
     console.log('loggggggggggggggggggg', logData);
     const [mobile, setMobile] = useState(logData?.mobile_no)
     const [password, setPassword] = useState('')
-    const [buttonLoader, setButtonLoader] =useState(false);
+    const [buttonLoader, setButtonLoader] = useState(false);
 
     const getLogin = () => {
+        let hasError = false;
+        if (mobile == '') {
+            Toast.show('Enter Register Mobile Number');
+            hasError = true;
+            return false
+        } 
+        if (password == '') {
+            Toast.show('Please enter password');
+            hasError = true;
+            return false
+        } 
+        if (hasError) return;
         let data = {
             "mobile_no": mobile,
             "password": password
         }
-        console.log('putttttttttttttttttttttt',data);
-        
+        console.log('putttttttttttttttttttttt', data);
         setButtonLoader(true)
         AuthService.setLogin(data)
             .then((res) => {
@@ -48,8 +59,8 @@ const OldLogin = () => {
             })
             .catch((err) => {
                 setButtonLoader(false)
-                console.log('errr',err);
-                
+                console.log('errr', err);
+
             })
     }
 
@@ -73,10 +84,12 @@ const OldLogin = () => {
                 </View>
                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Mobile</Text>
                 <AppTextInput
+                    editable={false}
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     value={mobile}
                     onChangeText={(val) => setMobile(val)}
+                    keyboardType='number-pad'
                 />
                 <Text style={{ ...styles.input_title, marginTop: moderateScale(15), color: colors.secondaryFontColor }}>Password</Text>
                 <AppTextInput

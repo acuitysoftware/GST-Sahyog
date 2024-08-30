@@ -23,6 +23,18 @@ const Login = () => {
     const [buttonLoader, setButtonLoader] =useState(false);
 
     const getLogin = () => {
+        let hasError = false;
+        if (mobile == '') {
+            Toast.show('Enter Register Mobile Number');
+            hasError = true;
+            return false
+        } 
+        if (password == '') {
+            Toast.show('Please enter password');
+            hasError = true;
+            return false
+        } 
+        if (hasError) return;
         let data = {
             "mobile_no": mobile,
             "password": password
@@ -74,6 +86,7 @@ const Login = () => {
                     onChangeText={(val) => setMobile(val)}
                     maxLength={10}
                     placeholder='Enter Mobile Number'
+                    keyboardType='number-pad'
                 />
                 <Text style={{ ...styles.input_title, marginTop: moderateScale(15), color: colors.secondaryFontColor }}>Password</Text>
                 <AppTextInput
