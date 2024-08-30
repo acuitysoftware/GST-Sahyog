@@ -1,6 +1,6 @@
 //import liraries
 import React, { Component, useState } from 'react';
-import { Dimensions, Image, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, TouchableOpacity } from 'react-native';
 import { View, Text, StyleSheet } from 'react-native';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { AppButton, AppTextInput, Icon, StatusBar, useTheme } from 'react-native-basic-elements';
@@ -10,6 +10,8 @@ import NavigationService from '../../Services/Navigation';
 import Modal from "react-native-modal";
 import { useRoute } from '@react-navigation/native';
 import AuthService from '../../Services/Auth';
+import { Formik } from 'formik';
+import * as yup from 'yup';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -18,52 +20,68 @@ const SignupDetails = () => {
     const route = useRoute()
     const regData = route.params.allData
     console.log('resssssssssssssssssssssss=========================', regData);
-    const [signature, setsignature] = useState('')
-    const [name, setName] = useState('')
-    const [mobile, setMobile] = useState(regData?.mobile_no)
-    const [email, setemail] = useState('')
-    const [password, setpassword] = useState('')
-    const [Cnfpassword, setCnfpassword] = useState('')
+    const [GSTno, setGSTno] = useState(regData?.gst_no)
+    const [buttonLoader, setButtonLoader] = useState(false);
+    const [allRegData, setAllRegData] = useState({})
 
     const [isModalVisible, setModalVisible] = useState(false);
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
     };
 
-    const validateMobile = (mobile) => {
-        const regex = /^[6-9]\d{9}$/;
-        return regex.test(mobile);
+    const SignupSchema = yup.object().shape({
+        signature: yup.string().required('Authorize Signature is required'),
+        name: yup.string().required('Name is required'),
+        mobile: yup.string().matches(/^[6-9]\d{9}$/, 'Invalid mobile number').required('Phone number is required'),
+        email: yup.string().email('Invalid email').required('Email is required'),
+        password: yup
+            .string()
+            .min(6, 'Password must be at least 6 characters')
+            .matches(
+                /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/,
+                'Password must contain at least one letter and one number'
+            )
+            .required('Password is required'),
+        Cnfpassword: yup
+            .string()
+            .oneOf([yup.ref('password'), null], 'Passwords must match')
+            .required('Confirm Password is required'),
+        // Add other fields validations here
+    });
+    const getSignupDetails = (values) => {
+        let data = {
+            "image": "",
+            "gst_no": values.GSTno || " ",
+            "mobile_no": values.mobile,
+            "auth_signature": values.signature,
+            "name": values.name,
+            "phone": values.mobile,
+            "email": values.email,
+            "password": values.password
+        };
+        console.log('Signup Data:============', data);
+        setAllRegData(data)
+        setModalVisible(true)
     };
 
-    const getSignupDetails = () => {
-        let data = {
-            "image":"",
-            "gst_no": regData?.gst_no || " " ,
-            "mobile_no": mobile,
-            "auth_signature": signature,
-            "name": name,
-            "phone": mobile,
-            "email": email,
-            "password": password
-        }
-        console.log('resdaaaaaaaaaaaa', data);
-        // setButtonLoader(true)
-        // AuthService.setSignUpDetails(data)
-        //     .then((res) => {
-        //         if (res) {
-        //             setButtonLoader(false);
-        //             Toast.show(res.message);
-        //             NavigationService.navigate('Login');
-        //         } else {
-        //             Toast.show(res.message,);
-        //             setButtonLoader(false);
-        //         }
-        //     })
-        //     .catch((err) => {
-        //         setButtonLoader(false);
-        //         console.log('errrr', err);
-        //         // Toast.show('An error occurred. Please try again.');
-        //     });
+    const handelUserResister = () => {
+        setButtonLoader(true);
+        AuthService.setSignUpDetails(allRegData)
+            .then((res) => {
+                if (res && res.error == false) {
+                    NavigationService.navigate('OldLogin', { allData: res?.data });
+                    Toast.show(res.message);
+                    setButtonLoader(false);
+                } else {
+                    Toast.show(res.message);
+                    setButtonLoader(false);
+                }
+
+            })
+            .catch((err) => {
+                setButtonLoader(false);
+                console.log('Error:', err);
+            });
     }
 
     return (
@@ -77,7 +95,7 @@ const SignupDetails = () => {
                 <Image source={require('../../assets/images/loginscreenlogo.png')}
                     style={styles.loginlogo_img}
                 />
-                <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
+                <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Personal Details</Text>
                 <View style={styles.img_view}>
                     <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
                         <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
@@ -88,107 +106,169 @@ const SignupDetails = () => {
                     </View>
                 </View>
 
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Authorize Signature </Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter Name'
-                    value={signature}
-                    onChangeText={(val) => setsignature(val)}
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter Name'
-                    value={name}
-                    onChangeText={(val) => setName(val)}
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    value={mobile}
-                    onChangeText={(val) => setMobile(val)}
-                    editable={false}
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter  Email'
-                    value={email}
-                    onChangeText={(val) => setemail(val)}
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Password</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Password'
-                    value={password}
-                    onChangeText={(val) => setpassword(val)}
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Confirm Password</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Confirm Password'
-                    value={Cnfpassword}
-                    onChangeText={(val) => setCnfpassword(val)}
+                <Formik
+                    initialValues={{
+                        signature: '',
+                        name: '',
+                        mobile: regData?.mobile_no || '',
+                        email: '',
+                        password: '',
+                        Cnfpassword: '',
+                        GSTno: regData?.gst_no || ''
+                    }}
+                    validationSchema={SignupSchema}
+                    onSubmit={getSignupDetails}
+                >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                        <>
+                            {/* Signature Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Authorize Signature </Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Signature'
+                                value={values.signature}
+                                onChangeText={handleChange('signature')}
+                                onBlur={handleBlur('signature')}
+                            // errorMessage={touched.signature && errors.signature ? errors.signature : ''}
+                            />
+                            {errors.signature && touched.signature && (
+                                <Text style={styles.errorText}>{errors.signature}</Text>
+                            )}
 
-                />
-                <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
-                <View style={styles.img_view}>
-                    <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
-                        <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
-                    </View>
-                    <View style={{ ...styles.upload_view, width: moderateScale(100), borderColor: colors.buttonColor }}>
-                        <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload </Text>
-                        <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
-                    </View>
-                </View>
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='07AAPCA6346P1ZX'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Name</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='xyz technology'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Email</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='xyz@mail.com'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Phone Number</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='+91 5565442458'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business address</Text>
-                <AppTextInput
-                    multiline={true}
-                    numberOfLines={6}
-                    inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Dunlop Kolkata 700250'
-                    textAlignVertical='top'
-                />
+                            {/* Name Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Name'
+                                value={values.name}
+                                onChangeText={handleChange('name')}
+                                onBlur={handleBlur('name')}
+                            />
+                            {errors.name && touched.name && (
+                                <Text style={styles.errorText}>{errors.name}</Text>
+                            )}
 
-                <AppButton
-                    textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
-                    style={styles.button_sty}
-                    title="Submit"
-                    // onPress={toggleModal}
-                    onPress={()=>getSignupDetails()}
-                />
+                            {/* Mobile Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                value={values.mobile}
+                                onChangeText={handleChange('mobile')}
+                                onBlur={handleBlur('mobile')}
+                                editable={false}
+                            />
+                            {errors.mobile && touched.mobile && (
+                                <Text style={styles.errorText}>{errors.mobile}</Text>
+                            )}
 
+                            {/* Email Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Email'
+                                value={values.email}
+                                onChangeText={handleChange('email')}
+                                onBlur={handleBlur('email')}
+                            // errorMessage={touched.email && errors.email ? errors.email : ''}
+                            />
+                            {errors.email && touched.email && (
+                                <Text style={styles.errorText}>{errors.email}</Text>
+                            )}
+
+                            {/* Password Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Password</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Password'
+                                value={values.password}
+                                onChangeText={handleChange('password')}
+                                onBlur={handleBlur('password')}
+                            // errorMessage={touched.password && errors.password ? errors.password : ''}
+                            />
+                            {errors.password && touched.password && (
+                                <Text style={styles.errorText}>{errors.password}</Text>
+                            )}
+
+                            {/* Confirm Password Field */}
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Confirm Password</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Confirm Password'
+                                value={values.Cnfpassword}
+                                onChangeText={handleChange('Cnfpassword')}
+                                onBlur={handleBlur('Cnfpassword')}
+                            // errorMessage={touched.Cnfpassword && errors.Cnfpassword ? errors.Cnfpassword : ''}
+                            />
+                            {errors.Cnfpassword && touched.Cnfpassword && (
+                                <Text style={styles.errorText}>{errors.Cnfpassword}</Text>
+                            )}
+
+
+                            <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
+                            <View style={styles.img_view}>
+                                <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
+                                    <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                                </View>
+                                <View style={{ ...styles.upload_view, width: moderateScale(100), borderColor: colors.buttonColor }}>
+                                    <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload </Text>
+                                    <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
+                                </View>
+                            </View>
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='07AAPCA6346P1ZX'
+                                value={GSTno}
+                                onChangeText={(val) => setGSTno(val)}
+                            />
+
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Name</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='xyz technology'
+                            />
+
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Email</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='xyz@mail.com'
+                            />
+
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business Phone Number</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='+91 5565442458'
+                            />
+
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business address</Text>
+                            <AppTextInput
+                                multiline={true}
+                                numberOfLines={6}
+                                inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Dunlop Kolkata 700250'
+                                textAlignVertical='top'
+                            />
+                            <AppButton
+                                textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
+                                style={styles.button_sty}
+                                title="Submit"
+                                onPress={handleSubmit}
+                            />
+
+                        </>
+                    )}
+                </Formik>
             </KeyboardAwareScrollView>
 
             <Modal isVisible={isModalVisible}
@@ -200,12 +280,13 @@ const SignupDetails = () => {
                     <Text style={{ ...styles.modal_massege, color: colors.primaryFontColor }}>Registration  Successful</Text>
 
                     <TouchableOpacity
-                        onPress={() => NavigationService.navigate('UserStack')}
+                        onPress={() => handelUserResister()}
                         style={{ ...styles.modalbutton_sty, backgroundColor: colors.buttonColor }}>
-
-                        <Text style={{ ...styles.button_txt_sty, color: colors.buttontxtColor }}>Ok</Text>
-
-
+                        { buttonLoader ?
+                                <ActivityIndicator size={'small'} color={'#fff'} />
+                                :
+                                <Text style={{ ...styles.button_txt_sty, color: colors.buttontxtColor }}>Ok</Text>
+                        }
                     </TouchableOpacity>
                 </View>
             </Modal>
@@ -329,6 +410,13 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(13),
         alignSelf: 'center',
     },
+    errorText: {
+        fontSize: moderateScale(12),
+        color: 'red',
+        fontFamily: FONTS.Jost.medium,
+        marginHorizontal: moderateScale(15),
+        marginTop: moderateScale(5)
+    }
 });
 
 //make this component available to the app

@@ -15,10 +15,13 @@ import { setuser } from '../../Redux/reducer/User';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
-const Login = () => {
+const OldLogin = () => {
     const colors = useTheme()
     const dispatch = useDispatch()
-    const [mobile, setMobile] = useState('')
+    const route = useRoute()
+    const logData = route.params.allData
+    console.log('loggggggggggggggggggg', logData);
+    const [mobile, setMobile] = useState(logData?.mobile_no)
     const [password, setPassword] = useState('')
     const [buttonLoader, setButtonLoader] =useState(false);
 
@@ -27,6 +30,8 @@ const Login = () => {
             "mobile_no": mobile,
             "password": password
         }
+        console.log('putttttttttttttttttttttt',data);
+        
         setButtonLoader(true)
         AuthService.setLogin(data)
             .then((res) => {
@@ -43,7 +48,7 @@ const Login = () => {
             })
             .catch((err) => {
                 setButtonLoader(false)
-                console.log('errrrr',err);
+                console.log('errr',err);
                 
             })
     }
@@ -72,8 +77,6 @@ const Login = () => {
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     value={mobile}
                     onChangeText={(val) => setMobile(val)}
-                    maxLength={10}
-                    placeholder='Enter Mobile Number'
                 />
                 <Text style={{ ...styles.input_title, marginTop: moderateScale(15), color: colors.secondaryFontColor }}>Password</Text>
                 <AppTextInput
@@ -173,4 +176,4 @@ const styles = StyleSheet.create({
 });
 
 //make this component available to the app
-export default Login;
+export default OldLogin;

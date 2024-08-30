@@ -21,6 +21,10 @@ const setSignUp = async (data) => {
 const setSignUpDetails = async (data) => {
     return HttpClient.post('/user_update.php', data);
 }
+const setLogin = async (data) => {
+    return HttpClient.post('/auth.php', data);
+}
+
 
 const AuthService = {
     getAccount,
@@ -28,7 +32,8 @@ const AuthService = {
     setToken,
     getToken,
     setSignUp,
-    setSignUpDetails
+    setSignUpDetails,
+    setLogin
 }
 
 export default AuthService;

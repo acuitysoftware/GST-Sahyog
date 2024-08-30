@@ -1,4 +1,4 @@
-//import libraries
+// Import libraries
 import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import { AppButton, AppTextInput, StatusBar, Text, useTheme } from 'react-native-basic-elements';
@@ -9,120 +9,127 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import NavigationService from '../../Services/Navigation';
 import AuthService from '../../Services/Auth';
 import Toast from "react-native-simple-toast";
+import { Formik } from 'formik';
+import * as yup from 'yup';
 
 const { height, width } = Dimensions.get('screen');
-// create a component
+
+// Define Yup validation schema
+const validationSchema = yup.object().shape({
+    //   gstNumber: yup
+    //     .string()
+    //     .required('GST Number is required')
+    //     .matches(/^\d{15}$/, 'GST Number must be exactly 15 digits'),
+    mobile: yup
+        .string()
+        .required('Mobile number is required')
+        .matches(/^[6-9]\d{9}$/, 'Please enter a valid mobile number'),
+});
+
 const Signup = () => {
     const colors = useTheme();
-    const [gstNumber, setGstNumber] = useState('')
-    const [mobile, setMobile] = useState('')
-    const [buttonLoader, setButtonLoader] = useState(false);
+    const [buttonLoader, setButtonLoader] =useState(false);
 
-    const validateMobile = (mobile) => {
-        const regex = /^[6-9]\d{9}$/;
-        return regex.test(mobile);
-    };
-    const getSignup = () => {
-        if (!mobile || mobile.trim() === "") {
-            Toast.show('Please enter mobile number.');
-            return;
-        }
-        if (!validateMobile(mobile)) {
-            Toast.show('Please enter a valid mobile number.');
-            return;
-        }
+    const handleSignup = (values) => {
+        const { gstNumber, mobile } = values;
+
         let data = {
             "gst_no": gstNumber,
             "mobile_no": mobile
-        }
-        console.log('resdaaaaaaaaaaaa', data);
-        setButtonLoader(true)
+        };
+
+        setButtonLoader(true);
         AuthService.setSignUp(data)
             .then((res) => {
-                if (res) {
-                    setButtonLoader(false);
+                setButtonLoader(false);
+                if (res && res.error === false) {
                     Toast.show(res.message);
-                    NavigationService.navigate('SignupDetails', { allData: res });
+                    NavigationService.navigate('SignupDetails', { allData: res?.data });
                 } else {
-                    Toast.show(res.message,);
-                    setButtonLoader(false);
+                    Toast.show(res.message);
                 }
             })
             .catch((err) => {
                 setButtonLoader(false);
-                console.log('errrr', err);
-                // Toast.show('An error occurred. Please try again.');
+                console.log('Error:', err);
+                Toast.show('An error occurred. Please try again.');
             });
-    }
+    };
 
     return (
         <View style={styles.container}>
-            <StatusBar
-                backgroundColor="transparent"
-                barStyle="light-content"
-                translucent={true}
-            />
+            <StatusBar backgroundColor="transparent" barStyle="light-content" translucent={true} />
             <KeyboardAwareScrollView>
-                <Svg
-                    height={height / 2.8}
-                    width={width}
-                >
+                <Svg height={height / 2.8} width={width}>
                     <Path
                         d={`
-                        M 0 0 
-                        H ${width} 
-                        V ${height / 3.5 - moderateScale(90)} 
-                        C ${width} ${height / 3 + moderateScale(20)}, 
-                          0 ${height / 2.5 + moderateScale(0)}, 
-                          0 ${height / 3.5 - moderateScale(80)} 
-                        Z
-                    `}
+              M 0 0 
+              H ${width} 
+              V ${height / 3.5 - moderateScale(90)} 
+              C ${width} ${height / 3 + moderateScale(20)}, 
+                0 ${height / 2.5 + moderateScale(0)}, 
+                0 ${height / 3.5 - moderateScale(80)} 
+              Z
+            `}
                         fill={colors.primaryThemeColor}
                     />
                     <Image source={require('../../assets/images/reg_gst.png')} style={styles.gst_img} />
                 </Svg>
 
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter GST Number'
-                    value={gstNumber}
-                    onChangeText={(val) => setGstNumber(val)}
-                />
-                <Text style={{ ...styles.input_title, marginTop: moderateScale(15), color: colors.secondaryFontColor }}>Mobile Number</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter Mobile Number'
-                    value={mobile}
-                    maxLength={10}
-                    keyboardType='number-pad'
-                    onChangeText={(val) => setMobile(val)}
-                />
+                <Formik
+                    initialValues={{ gstNumber: '', mobile: '' }}
+                    validationSchema={validationSchema}
+                    onSubmit={handleSignup}
+                >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                        <>
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number</Text>
+                            <AppTextInput
+                                inputContainerStyle={styles.inputcontainer_sty}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder="Enter GST Number"
+                                value={values.gstNumber}
+                                onChangeText={(text) => handleChange('gstNumber')(text.toUpperCase())}
+                                onBlur={handleBlur('gstNumber')}
+                            />
+                            {errors.gstNumber && touched.gstNumber && (
+                                <Text style={styles.errorText}>{errors.gstNumber}</Text>
+                            )}
+
+                            <Text style={{ ...styles.input_title, marginTop: moderateScale(15), color: colors.secondaryFontColor }}>Mobile Number</Text>
+                            <AppTextInput
+                                inputContainerStyle={styles.inputcontainer_sty}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Mobile Number'
+                                value={values.mobile}
+                                maxLength={10}
+                                keyboardType='number-pad'
+                                onChangeText={handleChange('mobile')}
+                                onBlur={handleBlur('mobile')}
+                            />
+                            {errors.mobile && touched.mobile && (
+                                <Text style={styles.errorText}>{errors.mobile}</Text>
+                            )}
+
+                            <View style={{ flex: 1 }} />
+
+                            <AppButton
+                                textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
+                                style={styles.button_sty}
+                                title="Signup"
+                                onPress={handleSubmit}
+                                loader={buttonLoader ? { position: "right", color: "#fff", size: "small" } : null}
+                                disabled={buttonLoader}
+                            />
+                        </>
+                    )}
+                </Formik>
             </KeyboardAwareScrollView>
-            <View style={{ flex: 1 }} />
-            <AppButton
-                textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
-                style={styles.button_sty}
-                title="Signup"
-                onPress={() => getSignup()}
-                loader={
-                    buttonLoader
-                        ? {
-                            position: "right",
-                            color: "#fff",
-                            size: "small",
-                        }
-                        : null
-                }
-                disabled={buttonLoader}
-            />
         </View>
     );
 };
 
-// define your styles
+// Define styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -165,7 +172,14 @@ const styles = StyleSheet.create({
         marginBottom: moderateScale(30),
         marginTop: moderateScale(10)
     },
+    errorText: {
+        fontSize: moderateScale(12),
+        color: 'red',
+        fontFamily: FONTS.Jost.medium,
+        marginHorizontal: moderateScale(15),
+        marginTop: moderateScale(5)
+    }
 });
 
-//make this component available to the app
+// Make this component available to the app
 export default Signup;

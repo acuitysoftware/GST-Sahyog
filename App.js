@@ -8,13 +8,14 @@ import { Theme } from 'react-native-basic-elements';
 import NavigationService from './src/Services/Navigation';
 import AuthStack from './src/Navigations/AuthStack';
 import UserStack from './src/Navigations/UserStack';
+import { useSelector } from 'react-redux';
 
 const Stack = createStackNavigator();
 
 // create a component
 const App = () => {
   const [isDark, setIsDark] = useState(false);
-  
+  const { login_status } = useSelector(state => state.User);
 
   return (
     <SafeAreaProvider>
@@ -82,8 +83,14 @@ const App = () => {
                 headerShown: false,
               }}
             >
-              <Stack.Screen name="AuthStack" component={AuthStack} />
-              <Stack.Screen name="UserStack" component={UserStack} />
+              {
+                login_status === true ?
+                <Stack.Screen name="UserStack" component={UserStack} />
+                :
+                <Stack.Screen name="AuthStack" component={AuthStack} />
+              }
+           
+           
 
             </Stack.Navigator>
           </NavigationContainer>
