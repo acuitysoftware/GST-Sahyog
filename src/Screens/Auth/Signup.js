@@ -28,7 +28,7 @@ const validationSchema = yup.object().shape({
 
 const Signup = () => {
     const colors = useTheme();
-    const [buttonLoader, setButtonLoader] =useState(false);
+    const [buttonLoader, setButtonLoader] = useState(false);
 
     const handleSignup = (values) => {
         const { gstNumber, mobile } = values;
@@ -37,10 +37,13 @@ const Signup = () => {
             "gst_no": gstNumber,
             "mobile_no": mobile
         };
+        console.log('signdataaaaaaaaaaa', data);
 
         setButtonLoader(true);
         AuthService.setSignUp(data)
             .then((res) => {
+                console.log('ressssssssssssssssss=============', res);
+
                 setButtonLoader(false);
                 if (res && res.error === false) {
                     Toast.show(res.message);

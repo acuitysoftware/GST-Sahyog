@@ -1,5 +1,5 @@
 // import libraries
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -8,7 +8,9 @@ import { Theme } from 'react-native-basic-elements';
 import NavigationService from './src/Services/Navigation';
 import AuthStack from './src/Navigations/AuthStack';
 import UserStack from './src/Navigations/UserStack';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import AuthService from './src/Services/Auth';
+import { setUser } from './src/Redux/reducer/User';
 
 const Stack = createStackNavigator();
 
@@ -16,7 +18,37 @@ const Stack = createStackNavigator();
 const App = () => {
   const [isDark, setIsDark] = useState(false);
   const { login_status } = useSelector(state => state.User);
+  const dispatch = useDispatch()
+  const [activeuser, setActiveUser] = useState('')
+  console.log('logggggggggggggggggg',login_status);
+  
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const token = await AuthService.getToken();
+        console.log('Token:', token);
+      } catch (error) {
+        console.error('Error fetching token:', error);
+      }
+    };
+  
+    fetchToken();
+    checkUser()
+  }, []);
 
+  const checkUser = async () => {
+    try {
+      const result = await AuthService.getAccount();
+      setActiveUser(result);
+      if (result) {
+        dispatch(setUser(result));
+        console.log('User logged in:=============', result);
+      }
+    } catch (error) {
+      console.error('Error checking user:==============', error);
+    }
+  };
+ 
   return (
     <SafeAreaProvider>
       <View
@@ -83,15 +115,12 @@ const App = () => {
                 headerShown: false,
               }}
             >
-              {
-                login_status === true ?
-                <Stack.Screen name="UserStack" component={UserStack} />
-                :
-                <Stack.Screen name="AuthStack" component={AuthStack} />
-              }
-           
-           
-
+            {login_status ? (
+              <Stack.Screen name="UserStack" component={UserStack} />
+            ) : (
+              <Stack.Screen name="AuthStack" component={AuthStack} />
+            )}
+          
             </Stack.Navigator>
           </NavigationContainer>
         </Theme.Provider>

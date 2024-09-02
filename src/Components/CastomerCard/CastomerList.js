@@ -1,28 +1,48 @@
-//import liraries
-import React, { Component } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { FONTS } from '../../Constants/Fonts';
 
-// create a component
-const CastomerList = ({ item, index }) => {
-    const colors = useTheme()
+const CastomerList = ({ item, index, delAccount }) => {
+    const colors = useTheme();
+
     return (
         <View>
             <View key={index} style={{ ...styles.container, backgroundColor: colors.secondaryThemeColor }}>
-                <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Web skill</Text>
-                <Text style={{ ...styles.webskill_number, color: colors.tintText }}>9845125548</Text>
+                <View>
+                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{item.name}</Text>
+                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>{item.phone_number}</Text>
+                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>{item.email}</Text>
+                    <Text numberOfLines={1} style={{ ...styles.webskill_number, width: moderateScale(230), color: colors.tintText }}>{item.address}</Text>
+                </View>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                }}>
+                    <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
+                        <Icon name='plus' type='AntDesign' size={20} color={colors.secondaryThemeColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ marginTop: 10, marginBottom: 10 }}>
+                        <Icon name='edit' type='Feather' size={20} color={colors.buttonColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => delAccount(item.id)}>
+                        <Icon name='delete' type='AntDesign' size={20} color={'#C7253E'} />
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={styles.line} />
         </View>
     );
 };
 
-// define your styles
+// Styles
 const styles = StyleSheet.create({
     container: {
         padding: moderateScale(15),
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     },
     line: {
         borderWidth: moderateScale(0.3),
@@ -35,9 +55,15 @@ const styles = StyleSheet.create({
     webskill_number: {
         fontFamily: FONTS.OpenSans.regular,
         fontSize: moderateScale(13)
+    },
+    add_btn: {
+        height: moderateScale(24),
+        width: moderateScale(24),
+        borderRadius: moderateScale(15),
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2
     }
 });
 
-//make this component available to the app
 export default CastomerList;
-

@@ -1,5 +1,5 @@
 //import liraries
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -7,11 +7,30 @@ import { Colors } from '../../Constants/Colors';
 import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { FONTS } from '../../Constants/Fonts';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSelector } from 'react-redux';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const Profile = () => {
     const colors = useTheme()
+    const { userData } = useSelector(state => state.User)
+    // console.log('userdataaaaaaaaaaaaaaaaaaaa', userData);
+
+    // useEffect(() => {
+
+    // }, [])
+    // const getUserUpdateAcc = (() => {
+    //     let data = {
+    //         "auth_signature": "",
+    //         "name": "",
+    //         "phone": "",
+    //         "email": "",
+    //         "password": "",
+    //         "image": "",
+    //         "userid": "",
+    //         "token": ""
+    //     }
+    // })
     return (
         <View style={styles.container}>
             <BackHeader title='My Account' />
@@ -33,7 +52,7 @@ const Profile = () => {
                         <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
                     </View>
                 </View>
-                <Text style={{ ...styles.input_title, marginTop:moderateScale(20),color: colors.secondaryFontColor }}>Authorize Signature </Text>
+                <Text style={{ ...styles.input_title, marginTop: moderateScale(20), color: colors.secondaryFontColor }}>Authorize Signature </Text>
                 <AppTextInput
                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
                     inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}

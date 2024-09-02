@@ -17,7 +17,6 @@ const HomeHeader = () => {
     const colors = useTheme()
     const dispatch = useDispatch()
     const { userData } = useSelector(state => state.User)
-    console.log('userdataaaaaaaaaaaaaaaaaaaa', userData);
     const [isModalVisible, setModalVisible] = useState(false);
     const toggleModal = () => {
         setModalVisible(!isModalVisible);

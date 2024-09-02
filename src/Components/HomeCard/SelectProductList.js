@@ -5,6 +5,7 @@ import { Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { FONTS } from '../../Constants/Fonts';
 import NavigationService from '../../Services/Navigation';
+import { TouchableOpacity } from 'react-native';
 
 // create a component
 const SelectProductList = ({ item, index }) => {
@@ -16,10 +17,20 @@ const SelectProductList = ({ item, index }) => {
                     <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Test Product</Text>
                     <Text style={{ ...styles.webskill_number, color: colors.buttonColor }}>₹100.00</Text>
                 </View>
-                <Pressable
-                style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
-                    <Text style={{ ...styles.addbtn_txt,color:colors.secondaryThemeColor }}>Add</Text>
-                </Pressable>
+                <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                }}>
+                    <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
+                        <Icon name='plus' type='AntDesign' size={20} color={colors.secondaryThemeColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ marginTop: 10, marginBottom: 10 }}>
+                        <Icon name='edit' type='Feather' size={20} color={colors.buttonColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => delAccount(item.id)}>
+                        <Icon name='delete' type='AntDesign' size={20} color={'#C7253E'} />
+                    </TouchableOpacity>
+                </View>
             </View>
             <View style={styles.line} />
         </View>
@@ -47,11 +58,12 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(13)
     },
     add_btn: {
-        height: moderateScale(30),
-        width: moderateScale(50),
-        borderRadius: moderateScale(5),
+        height: moderateScale(24),
+        width: moderateScale(24),
+        borderRadius: moderateScale(15),
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        elevation: 2
     },
     addbtn_txt: {
         fontFamily: FONTS.OpenSans.semibold,

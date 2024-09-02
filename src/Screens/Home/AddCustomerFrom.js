@@ -1,16 +1,89 @@
 //import liraries
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { AppButton, AppTextInput, useTheme } from 'react-native-basic-elements';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useSelector } from 'react-redux';
+import HomeService from '../../Services/HomeServises';
+import Toast from "react-native-simple-toast";
+import NavigationService from '../../Services/Navigation';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const AddCustomerFrom = () => {
     const colors = useTheme()
+    const { userData } = useSelector(state => state.User)
+    // console.log('userdataaaaaaaaaaaaaaaaaaaacustomer------------------', userData);
+    const [customerName, setCustomerName] = useState('')
+    const [customerMobile, setCustomerMobile] = useState('')
+    const [customerEmail, setCustomerEmail] = useState('')
+    const [customerPin, setCustomerPin] = useState('')
+    const [customerAddress, setCustomerAddress] = useState('')
+    const [buttonLoader, setButtonLoader] =useState(false);
+
+    const getAddCustomer = (() => {
+        let hasError = false;
+        if (customerName == '') {
+            Toast.show('Please enter Name');
+            hasError = true;
+            return false
+        }
+        if (customerMobile == '') {
+            Toast.show('Please enter Phone Number');
+            hasError = true;
+            return false
+        }
+        if (customerEmail == '') {
+            Toast.show('Please enter Email Id');
+            hasError = true;
+            return false
+        }
+        if (customerPin == '') {
+            Toast.show('Please enter PIN');
+            hasError = true;
+            return false
+        }
+        if (customerAddress == '') {
+            Toast.show('Please enter Address');
+            hasError = true;
+            return false
+        }
+        if (hasError) return;
+        let data = {
+            "userid": userData?.userid,
+            "name": customerName,
+            "phone_number": customerMobile,
+            "email": customerEmail,
+            "pin_code": customerPin,
+            "address": customerAddress
+        }
+        console.log('adddddddcusssssssssssss', data);
+        setButtonLoader(true)
+        HomeService.setAddCustomer(data)
+            .then((res) => {
+                console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
+                if (res && res.error === false) {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                    NavigationService.navigate('BottomTab', { screen: 'Customer' })
+                    
+                } else {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                }
+
+            })
+            .catch((err) => {
+                console.log('addcustomerrrrrrerrrr', err);
+                setButtonLoader(false)
+            })
+
+    })
+
+
     return (
         <View style={styles.container}>
             <BackHeader title='Add Customer' />
@@ -22,6 +95,8 @@ const AddCustomerFrom = () => {
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         placeholder='Enter Name'
+                        value={customerName}
+                        onChangeText={(val) => setCustomerName(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone Number </Text>
                     <AppTextInput
@@ -30,12 +105,16 @@ const AddCustomerFrom = () => {
                         placeholder='Enter Number'
                         maxLength={10}
                         keyboardType='phone-pad'
+                        value={customerMobile}
+                        onChangeText={(val) => setCustomerMobile(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         placeholder='Enter email'
+                        value={customerEmail}
+                        onChangeText={(val) => setCustomerEmail(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Pin </Text>
                     <AppTextInput
@@ -43,6 +122,8 @@ const AddCustomerFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         placeholder='Enter Pin'
                         keyboardType='phone-pad'
+                        value={customerPin}
+                        onChangeText={(val) => setCustomerPin(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                     <AppTextInput
@@ -52,9 +133,11 @@ const AddCustomerFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         placeholder='Address'
                         textAlignVertical='top'
+                        value={customerAddress}
+                        onChangeText={(val) => setCustomerAddress(val)}
                     />
                 </View>
-                <View style={{ backgroundColor: colors.secondaryThemeColor, marginTop:moderateScale(10),paddingBottom: moderateScale(10) }}>
+                <View style={{ backgroundColor: colors.secondaryThemeColor, marginTop: moderateScale(10), paddingBottom: moderateScale(10) }}>
                     <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number </Text>
                     <AppTextInput
@@ -64,24 +147,24 @@ const AddCustomerFrom = () => {
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Name </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty, backgroundColor: colors.borderColor }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Email </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty, backgroundColor: colors.borderColor }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Phone </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty, backgroundColor: colors.borderColor }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         maxLength={10}
                         keyboardType='number-pad'
                     />
-                   <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Address </Text>
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Company Address </Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty,backgroundColor:colors.borderColor }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty, backgroundColor: colors.borderColor }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                     />
                 </View>
@@ -89,9 +172,11 @@ const AddCustomerFrom = () => {
                     textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                     style={styles.button_sty}
                     title="Add Customer"
+                    onPress={() => getAddCustomer()}
+                    loader={buttonLoader ? { position: "right", color: "#fff", size: "small" } : null}
+                    disabled={buttonLoader}
                 />
             </KeyboardAwareScrollView>
-
         </View>
     );
 };

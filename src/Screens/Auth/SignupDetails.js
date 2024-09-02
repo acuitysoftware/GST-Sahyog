@@ -12,6 +12,7 @@ import { useRoute } from '@react-navigation/native';
 import AuthService from '../../Services/Auth';
 import { Formik } from 'formik';
 import * as yup from 'yup';
+import Toast from "react-native-simple-toast";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -23,7 +24,6 @@ const SignupDetails = () => {
     const [GSTno, setGSTno] = useState(regData?.gst_no)
     const [buttonLoader, setButtonLoader] = useState(false);
     const [allRegData, setAllRegData] = useState({})
-
     const [isModalVisible, setModalVisible] = useState(false);
     const toggleModal = () => {
         setModalVisible(!isModalVisible);

@@ -17,6 +17,7 @@ const AuthStack = () => {
             initialRouteName='Splash'
             screenOptions={{
                 headerShown: false,
+                ...TransitionPresets.SlideFromRightIOS,
             }}
         >
            <Stack.Screen name="Splash" component={Splash} />

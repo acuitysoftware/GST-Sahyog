@@ -25,7 +25,7 @@ async function request(endpoint, params = null, method = 'GET') {
     let token = await AuthService.getToken();
     let url = BASE_URL + endpoint;
 
-    console.log('Usertoken:', token);
+    console.log('Usertoken:===================', token);
     console.log('URL:', url);
 
     return new Promise((resolve, reject) => {
@@ -34,7 +34,7 @@ async function request(endpoint, params = null, method = 'GET') {
 
         xmlRequest.setRequestHeader('Accept', '*/*');
         xmlRequest.setRequestHeader('Content-Type', 'application/json');
-        xmlRequest.setRequestHeader('Authorization', `Bearer ${token}`);
+        xmlRequest.setRequestHeader('Authorization',token);
 
         if (method === 'GET') {
             xmlRequest.send();

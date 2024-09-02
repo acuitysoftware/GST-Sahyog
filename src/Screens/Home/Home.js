@@ -8,11 +8,15 @@ import { FONTS } from '../../Constants/Fonts';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
 import NavigationService from '../../Services/Navigation';
+import { useSelector } from 'react-redux';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const Home = () => {
     const colors = useTheme()
+    const { userData } = useSelector(state => state.User)
+    console.log('userrrrrrrrrrrrrrrrrrrrrrr',userData);
+    
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [DateData, setDateData] = useState('');
     const [Date, setDate] = useState('');

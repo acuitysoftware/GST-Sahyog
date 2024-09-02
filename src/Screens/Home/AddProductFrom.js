@@ -1,16 +1,61 @@
 //import liraries
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
+import { useSelector } from 'react-redux';
+import HomeService from '../../Services/HomeServises';
+import NavigationService from '../../Services/Navigation';
+import Toast from "react-native-simple-toast";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const AddProductFrom = () => {
     const colors = useTheme()
+    const { userData } = useSelector(state => state.User);
+    const [buttonLoader, setButtonLoader] = useState(false);
+    const [productName, setProductName] = useState('')
+    const [productMrp, setProductMrp] = useState('')
+    const [productDPrice, setProductDPrice] = useState('')
+    const [productTValue, setProductTValue] = useState('')
+    const [productPrice, setProductPrice] = useState('')
+
+    const getAddProduct = (() => {
+        let data = {
+            "userid": userData?.userid,
+            "name": productName,
+            "mrp": productMrp,
+            "discount_price": productDPrice,
+            "taxable_value": productTValue,
+            "hsn_code": "",
+            "hsn_id": "",
+            "product_price": productPrice
+        }
+        console.log('adddddddproducttttttttttttttttt', data);
+        setButtonLoader(true)
+        HomeService.addProduct(data)
+            .then((res) => {
+                console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
+                if (res && res.error === false) {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                    NavigationService.navigate('SelectProduct')
+
+                } else {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                }
+
+            })
+            .catch((err) => {
+                console.log('addcustomerrrrrrerrrr', err);
+                setButtonLoader(false)
+            })
+
+    })
     return (
         <View style={styles.container}>
             <BackHeader title='Add Product' />
@@ -21,25 +66,32 @@ const AddProductFrom = () => {
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    // placeholder='Enter Name'
+                        value={productName}
+                        onChangeText={(val) => setProductName(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>MRP</Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
+                        value={productMrp}
+                        onChangeText={(val)=>setProductMrp(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Discounted Price </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
+                        value={productDPrice}
+                        onChangeText={(val)=>setProductDPrice(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Taxable value </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
+                        value={productTValue}
+                        onChangeText={(val)=>setProductTValue(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>HSN Code </Text>
                     <View style={styles.hsn_view}>
@@ -79,12 +131,17 @@ const AddProductFrom = () => {
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
+                        value={productPrice}
+                        onChangeText={(val)=>setProductPrice(val)}
                     />
 
                     <AppButton
                         textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                         style={styles.button_sty}
-                        title="Add Customer"
+                        title="Add Product"
+                        onPress={() => getAddProduct()}
+                        loader={buttonLoader ? { position: "right", color: "#fff", size: "small" } : null}
+                        disabled={buttonLoader}
                     />
 
                 </View>

@@ -1,16 +1,47 @@
 
 //import liraries
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import BackHeader from '../../Components/Header/BackHeader';
 import SelectProductList from '../../Components/HomeCard/SelectProductList';
 import NavigationService from '../../Services/Navigation';
+import { useSelector } from 'react-redux';
+import HomeService from '../../Services/HomeServises';
 
 // create a component
 const SelectProduct = () => {
     const colors = useTheme()
+    const { userData } = useSelector(state => state.User);
+    const [allProduct, setAllProduct] = useState([]);
+    const [loading, setLoading] = useState(true);
+    useFocusEffect(
+        useCallback(() => {
+            allProductList();
+        }, [])
+    );
+
+    const allProductList = () => {
+        let data = {
+            "userid": userData?.userid
+        };
+        console.log('Fetching customers:', data);
+        setLoading(true);
+        HomeService.setAllAccount(data)
+            .then((res) => {
+                console.log('Response:33333333333333333333333product', JSON.stringify(res));
+                if (res && res.error === false) {
+                    setAllProduct(res.data);
+                }
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.log('Error fetching customers:', err);
+                setLoading(false);
+            });
+    };
+
     return (
         <View style={styles.container}>
             <BackHeader title='Select Product' />

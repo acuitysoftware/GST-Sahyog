@@ -11,7 +11,7 @@ import { useRoute } from '@react-navigation/native';
 import Toast from "react-native-simple-toast";
 import AuthService from '../../Services/Auth';
 import { useDispatch } from 'react-redux';
-import { setuser } from '../../Redux/reducer/User';
+import { setUser } from '../../Redux/reducer/User';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -50,7 +50,7 @@ const OldLogin = () => {
                     Toast.show(res.message);
                     AuthService.setAccount(res.data);
                     AuthService.setToken(res?.data?.token);
-                    dispatch(setuser(res.data))
+                    dispatch(setUser(res.data))
                     setButtonLoader(false)
                 } else {
                     Toast.show(res.message);
