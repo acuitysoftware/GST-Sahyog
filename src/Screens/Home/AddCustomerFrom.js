@@ -60,11 +60,11 @@ const AddCustomerFrom = () => {
             "pin_code": customerPin,
             "address": customerAddress
         }
-        console.log('adddddddcusssssssssssss', data);
+        // console.log('adddddddcusssssssssssss', data);
         setButtonLoader(true)
         HomeService.setAddCustomer(data)
             .then((res) => {
-                console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
+                // console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
                 if (res && res.error === false) {
                     setButtonLoader(false)
                     Toast.show(res.message);

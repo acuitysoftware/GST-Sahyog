@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { FONTS } from '../../Constants/Fonts';
+import NavigationService from '../../Services/Navigation';
 
 const CastomerList = ({ item, index, delAccount }) => {
     const colors = useTheme();
@@ -21,9 +22,10 @@ const CastomerList = ({ item, index, delAccount }) => {
                     justifyContent: 'space-between',
                 }}>
                     <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
-                        <Icon name='plus' type='AntDesign' size={20} color={colors.secondaryThemeColor} />
+                        <Icon name='user-plus' type='FontAwesome5' size={12} color={colors.secondaryThemeColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={{ marginTop: 10, marginBottom: 10 }}>
+                    <TouchableOpacity  onPress={() => NavigationService.navigate('EditCustomerFrom', { customerId: item.id })}
+                     style={{ marginTop: 10, marginBottom: 10 }}>
                         <Icon name='edit' type='Feather' size={20} color={colors.buttonColor} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => delAccount(item.id)}>

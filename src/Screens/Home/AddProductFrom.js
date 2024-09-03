@@ -1,6 +1,6 @@
 //import liraries
-import React, { Component, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import React, { Component, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, ScrollView } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
 import NavigationService from '../../Services/Navigation';
 import Toast from "react-native-simple-toast";
+import Modal from "react-native-modal";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -22,6 +23,56 @@ const AddProductFrom = () => {
     const [productDPrice, setProductDPrice] = useState('')
     const [productTValue, setProductTValue] = useState('')
     const [productPrice, setProductPrice] = useState('')
+    const [AllHsnCode, setAllHsnCode] = useState([]);
+    const [HsnID, setHsnID] = useState('');
+    const [HsnCode, setHsnCode] = useState('');
+    const [CGST, setCGST] = useState('');
+    const [SGST, setSGST] = useState('');
+    const [cess, setcess] = useState('');
+    const [isModalVisible, setModalVisible] = useState(false);
+
+    const toggleModal = () => {
+        setModalVisible(!isModalVisible);
+    };
+
+    useEffect(() => {
+        getHSNProduct();
+    }, []);
+
+    const getHSNProduct = () => {
+        let data = {
+            userid: userData?.userid,
+            hsn_code: HsnCode,
+        };
+        console.log('Fetching HSN Product data:', data);
+        HomeService.addProductHNSCode(data)
+            .then((res) => {
+                console.log('HSN Product response:', res);
+                if (res && res.error === false) {
+                    setAllHsnCode(res.data);
+                }
+            })
+            .catch((err) => {
+                console.log('Error fetching HSN Product data:', err);
+            });
+    };
+
+    // Function to handle selecting an item from the modal
+    const handleSelectHsnCode = (item) => {
+        setHsnID(item.hsn_id)
+        setHsnCode(item.code);
+        setCGST(item.cgst);
+        setSGST(item.sgst);
+        setcess(item.igst);
+        setModalVisible(false);
+    };
+    useEffect(() => {
+        if (HsnCode === '') {
+            setCGST('');
+            setSGST('');
+            setcess('');
+        }
+    }, [HsnCode]);
 
     const getAddProduct = (() => {
         let data = {
@@ -30,8 +81,8 @@ const AddProductFrom = () => {
             "mrp": productMrp,
             "discount_price": productDPrice,
             "taxable_value": productTValue,
-            "hsn_code": "",
-            "hsn_id": "",
+            "hsn_code": HsnCode,
+            "hsn_id": HsnID,
             "product_price": productPrice
         }
         console.log('adddddddproducttttttttttttttttt', data);
@@ -56,6 +107,7 @@ const AddProductFrom = () => {
             })
 
     })
+
     return (
         <View style={styles.container}>
             <BackHeader title='Add Product' />
@@ -75,7 +127,7 @@ const AddProductFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
                         value={productMrp}
-                        onChangeText={(val)=>setProductMrp(val)}
+                        onChangeText={(val) => setProductMrp(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Discounted Price </Text>
                     <AppTextInput
@@ -83,7 +135,7 @@ const AddProductFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
                         value={productDPrice}
-                        onChangeText={(val)=>setProductDPrice(val)}
+                        onChangeText={(val) => setProductDPrice(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Taxable value </Text>
                     <AppTextInput
@@ -91,40 +143,49 @@ const AddProductFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
                         value={productTValue}
-                        onChangeText={(val)=>setProductTValue(val)}
+                        onChangeText={(val) => setProductTValue(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>HSN Code </Text>
+
                     <View style={styles.hsn_view}>
                         <AppTextInput
                             inputContainerStyle={{ ...styles.HNSinputcontainer_sty }}
                             inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                            keyboardType='phone-pad'
+                            keyboardType="phone-pad"
+                            maxLength={6}
+                            value={HsnCode}
+                            onChangeText={(val) => setHsnCode(val)}
                         />
-                        <Pressable style={{ ...styles.hns_seacrch_view, backgroundColor: colors.buttonColor }}>
-                            <Icon name='search' type='Fontisto' color={colors.secondaryThemeColor} />
+                        <Pressable onPress={toggleModal} style={{ ...styles.hns_seacrch_view, backgroundColor: colors.buttonColor }}>
+                            <Icon name="search" type="Fontisto" color={colors.secondaryThemeColor} />
                         </Pressable>
                     </View>
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>CGST </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        keyboardType='phone-pad'
-                        placeholder='9%'
+                        keyboardType="phone-pad"
+                        placeholder="9%"
+                        value={CGST}
+                        onChangeText={(val) => setCGST(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>SGST </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        keyboardType='phone-pad'
-                        placeholder='9%'
+                        keyboardType="phone-pad"
+                        placeholder="9%"
+                        value={SGST}
+                        onChangeText={(val) => setSGST(val)}
                     />
-
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>cess </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        keyboardType='phone-pad'
-                        placeholder='4%'
+                        keyboardType="phone-pad"
+                        placeholder="4%"
+                        value={cess}
+                        onChangeText={(val) => setcess(val)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Product Price </Text>
                     <AppTextInput
@@ -132,7 +193,7 @@ const AddProductFrom = () => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
                         value={productPrice}
-                        onChangeText={(val)=>setProductPrice(val)}
+                        onChangeText={(val) => setProductPrice(val)}
                     />
 
                     <AppButton
@@ -146,6 +207,31 @@ const AddProductFrom = () => {
 
                 </View>
             </KeyboardAwareScrollView>
+            <Modal
+                isVisible={isModalVisible}
+                onBackButtonPress={() => setModalVisible(false)}
+                onBackdropPress={() => setModalVisible(false)}
+                style={{
+                    justifyContent: 'flex-end',
+                    marginBottom:moderateScale(100)
+                }}
+            >
+                <View style={styles.modalView}>
+                    <ScrollView>
+                        {AllHsnCode.map((item, index) => (
+                            <Pressable
+                                key={index}
+                                onPress={() => handleSelectHsnCode(item)}
+                                style={{...styles.hsncode_view,borderColor:colors.borderColor}}
+                            >
+                                <Text style={{...styles.modal_title, color: colors.secondaryFontColor }} >
+                                    {item.code}
+                                </Text>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -210,6 +296,25 @@ const styles = StyleSheet.create({
         marginTop: moderateScale(30),
         marginBottom: moderateScale(20)
     },
+    modalView: {
+        backgroundColor: "white",
+        borderRadius: moderateScale(3),
+        alignSelf: 'center',
+        width: moderateScale(250),
+        height: moderateScale(300),
+        padding:moderateScale(5)
+    },
+    hsncode_view:{
+        padding: moderateScale(8),
+        backgroundColor: '#fff',
+        marginBottom: moderateScale(7),
+       borderWidth:moderateScale(0.5),
+       borderRadius:moderateScale(4)
+    },
+    modal_title:{
+        fontFamily: FONTS.Jost.regular,
+        fontSize: moderateScale(17),
+    }
 });
 
 //make this component available to the app

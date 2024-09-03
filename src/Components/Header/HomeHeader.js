@@ -1,5 +1,5 @@
 //import liraries
-import React, { Component, useState } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import { Icon, StatusBar, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -11,6 +11,7 @@ import NavigationService from '../../Services/Navigation';
 import { logout } from '../../Redux/reducer/User';
 import { TouchableOpacity } from 'react-native';
 import Toast from "react-native-simple-toast";
+import HomeService from '../../Services/HomeServises';
 
 // create a component
 const HomeHeader = () => {
@@ -18,9 +19,15 @@ const HomeHeader = () => {
     const dispatch = useDispatch()
     const { userData } = useSelector(state => state.User)
     const [isModalVisible, setModalVisible] = useState(false);
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [phoneNumber, setPhoneNumber] = useState('')
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
     };
+    useEffect(()=>{
+        getUserProfile()
+    },[])
 
     const logoutUser = () => {
         Toast.show('Logged Out Successfully ', Toast.SHORT);
@@ -30,6 +37,23 @@ const HomeHeader = () => {
         dispatch(logout());
 
     };
+
+    const getUserProfile = (() => {
+        let data = {
+            "userid": userData.userid
+        }
+        HomeService.setUserProfile(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setName(res?.data?.name)
+                    setEmail(res?.data?.email)
+                    setPhoneNumber(res?.data?.phone)
+                }
+            })
+            .catch((err) => {
+                console.log('fatchprofileerrrrrrr', err);
+            })
+    })
     return (
         <View>
             <View style={{ ...styles.container, backgroundColor: colors.cardColor }}>
@@ -66,15 +90,15 @@ const HomeHeader = () => {
 
                     <View style={styles.m_primary_view}>
                         <Text style={{ ...styles.modal_title, color: colors.primaryFontColor }}>Name : </Text>
-                        <Text style={{ ...styles.modal_name_txt, color: colors.secondaryFontColor }}>{userData?.name}</Text>
+                        <Text style={{ ...styles.modal_name_txt, color: colors.secondaryFontColor }}>{name}</Text>
                     </View>
                     <View style={styles.m_primary_view}>
                         <Text style={{ ...styles.modal_title, color: colors.primaryFontColor }}>Phone : </Text>
-                        <Text style={{ ...styles.modal_name_txt, color: colors.secondaryFontColor }}>+91 {userData?.mobile_no}</Text>
+                        <Text style={{ ...styles.modal_name_txt, color: colors.secondaryFontColor }}>+91 {phoneNumber}</Text>
                     </View>
                     <View style={styles.m_primary_view}>
                         <Text style={{ ...styles.modal_title, color: colors.primaryFontColor }}>Email : </Text>
-                        <Text numberOfLines={1} style={{ ...styles.modal_email_txt, color: colors.secondaryFontColor }}>{userData?.email}</Text>
+                        <Text numberOfLines={1} style={{ ...styles.modal_email_txt, color: colors.secondaryFontColor }}>{email}</Text>
                     </View>
                     <TouchableOpacity
                     onPress={()=>logoutUser()}

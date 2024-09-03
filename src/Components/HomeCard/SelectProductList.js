@@ -8,14 +8,27 @@ import NavigationService from '../../Services/Navigation';
 import { TouchableOpacity } from 'react-native';
 
 // create a component
-const SelectProductList = ({ item, index }) => {
+const SelectProductList = ({ item, index,delProduct }) => {
     const colors = useTheme()
     return (
         <View>
             <View key={index} style={{ ...styles.container, backgroundColor: colors.secondaryThemeColor }}>
                 <View>
-                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Test Product</Text>
-                    <Text style={{ ...styles.webskill_number, color: colors.buttonColor }}>₹100.00</Text>
+                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{item.name}</Text>
+                    <Text style={{
+                        ...styles.webskill_number,
+                        textDecorationLine: 'line-through',
+                        fontFamily: FONTS.OpenSans.medium,
+                        color: colors.tintText
+                    }}>₹{item.mrp}</Text>
+                    <Text style={{ ...styles.webskill_number, color: colors.buttonColor }}>₹{item.product_price}</Text>
+                    {item.product_price ? (
+                        <Text style={{ ...styles.webskill_number, color: colors.secondaryFontColor }}>{item.hsn_code}</Text>
+                    ) : (
+                        <Text style={{ ...styles.webskill_number, color: colors.secondaryFontColor }}>---</Text>
+                    )
+
+                    }
                 </View>
                 <View style={{
                     alignItems: 'center',
@@ -24,10 +37,12 @@ const SelectProductList = ({ item, index }) => {
                     <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
                         <Icon name='plus' type='AntDesign' size={20} color={colors.secondaryThemeColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity style={{ marginTop: 10, marginBottom: 10 }}>
+                    <TouchableOpacity 
+                    onPress={()=>NavigationService.navigate('EditProductFrom',{productId:item.id})}
+                    style={{ marginTop: 10, marginBottom: 10 }}>
                         <Icon name='edit' type='Feather' size={20} color={colors.buttonColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => delAccount(item.id)}>
+                    <TouchableOpacity onPress={() => delProduct(item.id)}>
                         <Icon name='delete' type='AntDesign' size={20} color={'#C7253E'} />
                     </TouchableOpacity>
                 </View>

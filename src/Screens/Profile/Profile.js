@@ -1,6 +1,6 @@
 //import liraries
-import React, { Component, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, { Component, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { Colors } from '../../Constants/Colors';
@@ -8,89 +8,160 @@ import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elem
 import { FONTS } from '../../Constants/Fonts';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSelector } from 'react-redux';
+import HomeService from '../../Services/HomeServises';
+import Toast from "react-native-simple-toast";
+import NavigationService from '../../Services/Navigation';
+
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const Profile = () => {
     const colors = useTheme()
     const { userData } = useSelector(state => state.User)
-    // console.log('userdataaaaaaaaaaaaaaaaaaaa', userData);
+    const [loading, setLoading] = useState(true);
+    const [authSignature, setAuthSignature] = useState('')
+    const [name, setName] = useState('')
+    const [email, setEmail] = useState('')
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [address, setAddress] = useState('')
+    const [buttonLoader, setButtonLoader] = useState(false);
 
-    // useEffect(() => {
+    useEffect(() => {
+        getUserProfile()
+    }, [getUpdateProfile])
 
-    // }, [])
-    // const getUserUpdateAcc = (() => {
-    //     let data = {
-    //         "auth_signature": "",
-    //         "name": "",
-    //         "phone": "",
-    //         "email": "",
-    //         "password": "",
-    //         "image": "",
-    //         "userid": "",
-    //         "token": ""
-    //     }
-    // })
+    const getUserProfile = (() => {
+        let data = {
+            "userid": userData.userid
+        }
+        setLoading(true)
+        HomeService.setUserProfile(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setAuthSignature(res?.data?.auth_signature)
+                    setName(res?.data?.name)
+                    setEmail(res?.data?.email)
+                    setPhoneNumber(res?.data?.phone)
+                    setAddress(res?.data?.address)
+                    setLoading(false)
+                }
+            })
+            .catch((err) => {
+                console.log('fatchprofileerrrrrrr', err);
+                setLoading(false)
+            })
+    })
+
+    const getUpdateProfile = (() => {
+        let data = {
+            "auth_signature": authSignature,
+            "name": name,
+            "phone": phoneNumber,
+            "email": email,
+            "userid": userData.userid,
+            "address": address
+        }
+        // console.log('udaaaaaaatatttttttttt',data);
+        setButtonLoader(true)
+        HomeService.UpdateUserProfile(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                    NavigationService.navigate('BottomTab', { screen: 'Home' })
+                }
+                else {
+                    setButtonLoader(false)
+                    Toast.show(res.message);
+                }
+            })
+            .catch((err) => {
+                console.log('updateprofileerrrr', err);
+                setButtonLoader(false)
+            })
+    })
     return (
         <View style={styles.container}>
             <BackHeader title='My Account' />
-            <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
-                <View style={{ alignItems: 'center' }}>
-                    <View style={{ ...styles.topimg_view, backgroundColor: colors.secondaryThemeColor }}>
-                        <Image source={require('../../assets/images/security.png')} style={styles.img_sty} />
+            {
+                loading ? (
+                    <View style={styles.loader}>
+                        <ActivityIndicator size="large" color={colors.buttonColor} />
                     </View>
-                    <TouchableOpacity style={{ ...styles.camera_view, backgroundColor: colors.buttonColor }}>
-                        <Icon name='camera' size={18} type='AntDesign' color={colors.secondaryThemeColor} />
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.img_view}>
-                    <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
-                        <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
-                    </View>
-                    <View style={{ ...styles.upload_view, borderColor: colors.buttonColor }}>
-                        <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload Signature</Text>
-                        <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
-                    </View>
-                </View>
-                <Text style={{ ...styles.input_title, marginTop: moderateScale(20), color: colors.secondaryFontColor }}>Authorize Signature </Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter Name'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter Name'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter  Email'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone Number</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Enter  Phone Number'
-                    maxLength={10}
-                    keyboardType='phone-pad'
-                />
-                <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
-                <AppTextInput
-                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
-                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                    placeholder='Dunlop Kolkata 700250'
-                />
+                ) :
+                    (
+                        <KeyboardAwareScrollView showsVerticalScrollIndicator={false}>
+                            <View style={{ alignItems: 'center' }}>
+                                <View style={{ ...styles.topimg_view, backgroundColor: colors.secondaryThemeColor }}>
+                                    <Image source={require('../../assets/images/security.png')} style={styles.img_sty} />
+                                </View>
+                                <TouchableOpacity style={{ ...styles.camera_view, backgroundColor: colors.buttonColor }}>
+                                    <Icon name='camera' size={18} type='AntDesign' color={colors.secondaryThemeColor} />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.img_view}>
+                                <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
+                                    <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                                </View>
+                                <View style={{ ...styles.upload_view, borderColor: colors.buttonColor }}>
+                                    <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload Signature</Text>
+                                    <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
+                                </View>
+                            </View>
+                            <Text style={{ ...styles.input_title, marginTop: moderateScale(20), color: colors.secondaryFontColor }}>Authorize Signature </Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Name'
+                                value={authSignature}
+                                onChangeText={(val) => setAuthSignature(val)}
+                            />
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Name</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter Name'
+                                value={name}
+                                onChangeText={(val) => setName(val)}
+                            />
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Email</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter  Email'
+                                value={email}
+                                onChangeText={(val) => setEmail(val)}
+                            />
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Phone Number</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Enter  Phone Number'
+                                maxLength={10}
+                                keyboardType='phone-pad'
+                                value={phoneNumber}
+                                onChangeText={(val) => setPhoneNumber(val)}
+                            />
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
+                            <AppTextInput
+                                inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                placeholder='Dunlop Kolkata 700250'
+                                value={address}
+                                onChangeText={(val) => setAddress(val)}
+                            />
 
-                <AppButton
-                    textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
-                    style={styles.button_sty}
-                    title="Save"
-                />
-            </KeyboardAwareScrollView>
+                            <AppButton
+                                textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
+                                style={styles.button_sty}
+                                title="Save"
+                                onPress={() => getUpdateProfile()}
+                                loader={buttonLoader ? { position: "right", color: "#fff", size: "small" } : null}
+                                disabled={buttonLoader}
+                            />
+                        </KeyboardAwareScrollView>
+                    )}
+
         </View>
     );
 };
@@ -189,6 +260,11 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginTop: moderateScale(20),
         marginBottom: moderateScale(20)
+    },
+    loader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

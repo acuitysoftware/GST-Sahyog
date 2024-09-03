@@ -49,11 +49,11 @@ const CreateInvoice = () => {
                 }}>
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Invoice Number</Text>
                     <AppTextInput
-                        editable={false}
                         inputContainerStyle={{ ...styles.inputcontainer_sty, backgroundColor: colors.borderColor }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         value={invoiceNo}
-                        onChangeText={(val) => setInvoiceNo(val)}
+                        onChangeText={(val) => setInvoiceNo(val.toUpperCase())}
+                        keyboardType='name-phone-pad'
                     />
                 </View>
 
