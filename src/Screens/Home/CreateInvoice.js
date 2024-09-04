@@ -1,5 +1,5 @@
 //import liraries
-import React, { Component, useState } from 'react';
+import React, { Component, useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Pressable, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
@@ -7,26 +7,106 @@ import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
 import NavigationService from '../../Services/Navigation';
 import Modal from "react-native-modal";
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { Alert } from 'react-native';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const CreateInvoice = () => {
     const colors = useTheme()
+    const route = useRoute();
+    const customer_Data = route.params?.customerData || {};
+    const product_Data = route.params?.productData || {};
     const [invoiceNo, setInvoiceNo] = useState('WBSTC5K545555')
     const [ShippingChargeModal, setShippingChargeModal] = useState(false);
     const [ServiceChargeModal, setServiceChargeModal] = useState(false);
     const [AdditionalChargeModal, setAdditionalChargeModal] = useState(false);
     const [AddNoteModal, setAddNoteModal] = useState(false);
-    const [number, setNumber] = useState(1);
-    const handleIncrement = () => {
-        setNumber(prevNumber => prevNumber + 1);
-    };
-    const handleDecrement = () => {
-        if (number > 1) {
-            setNumber(prevNumber => prevNumber - 1);
+
+    const [customer, setCustomer] = useState({});
+
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [totalAmount, setTotalAmount] = useState(0);
+
+    const [shippingAddress, setShippingAddress] = useState(null);
+    const [shippingCharge, setShippingCharge] = useState(null);
+    const [serviceCharge, setServiceCharge] = useState(null);
+    const [gst, setGst] = useState('');
+    const [additionalCharge, setAdditionalCharge] = useState(null);
+    const [note, setNote] = useState('');
+    console.log('shippingCharge', shippingCharge);
+
+
+
+    useEffect(() => {
+        if (route.params?.updatedAddress) {
+            setShippingAddress(route.params.updatedAddress);
         }
+    }, [route.params]);
+    console.log('shippingAddress', shippingAddress);
+
+
+    useEffect(() => {
+        if (customer !== customer_Data) {
+            setCustomer(customer_Data);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (Object.keys(product_Data).length !== 0) {
+                const existingProduct = selectedProducts.find(product => product.id === product_Data.id);
+                if (existingProduct) {
+                    // Update existing product data with the new edited data
+                    // Alert.alert('Product Already Added', 'This product is already in the list.');
+                    const updatedProducts = selectedProducts.map(product =>
+                        product.id === product_Data.id ? { ...product, ...product_Data } : product
+                    );
+                    setSelectedProducts(updatedProducts);
+                } else {
+                    // Add new product
+                    const newProduct = { ...product_Data, quantity: 1 };
+                    setSelectedProducts([...selectedProducts, newProduct]);
+                    setTotalAmount(prevTotal => prevTotal + parseFloat(product_Data.product_price));
+                }
+            }
+        }, [product_Data])
+    );
+
+
+    const handleIncrement = (id) => {
+        const updatedProducts = selectedProducts.map(product => {
+            if (product.id === id) {
+                const updatedQuantity = product.quantity + 1;
+                setTotalAmount(prevTotal => prevTotal + parseFloat(product.product_price));
+                return { ...product, quantity: updatedQuantity };
+            }
+            return product;
+        });
+        setSelectedProducts(updatedProducts);
     };
 
+    const handleDecrement = (id) => {
+        const updatedProducts = selectedProducts.map(product => {
+            if (product.id === id) {
+                const updatedQuantity = product.quantity - 1;
+                if (updatedQuantity === 0) {
+                    setTotalAmount(prevTotal => prevTotal - parseFloat(product.product_price) * product.quantity);
+                    return null;
+                } else {
+                    setTotalAmount(prevTotal => prevTotal - parseFloat(product.product_price));
+                    return { ...product, quantity: updatedQuantity };
+                }
+            }
+            return product;
+        }).filter(product => product !== null);
+        setSelectedProducts(updatedProducts);
+    };
+
+
+
+
+    // Handlers to toggle modal visibility
     const handleShipingCharge = () => {
         setShippingChargeModal(!ShippingChargeModal);
     };
@@ -39,6 +119,43 @@ const CreateInvoice = () => {
     const handleAddNote = () => {
         setAddNoteModal(!AddNoteModal);
     };
+
+    // useEffect(() => {
+    //     const total = selectedProducts.reduce((acc, product) => acc + (parseFloat(product.product_price) * product.quantity), 0);
+    //     const totalCharges = (parseFloat(shippingCharge) || 0) + (parseFloat(serviceCharge) || 0) + (parseFloat(additionalCharge) || 0);
+    //     setTotalAmount(total + totalCharges);
+    // }, [selectedProducts, shippingCharge, serviceCharge, additionalCharge]);
+
+    // // Calculating total amount
+    // // const totalAmount = (shippingCharge || 0) + (serviceCharge || 0) + (additionalCharge || 0);
+    // const calculateTotalAmount = () => {
+    //     const serviceChargeAmount = serviceCharge !== null ? serviceCharge : 0;
+    //     const gstPercentage = parseFloat(gst) || 0;
+    //     const gstAmount = (serviceChargeAmount * gstPercentage) / 100;
+    //     return serviceChargeAmount + gstAmount;
+    // };
+
+    const calculateTotalAmount = () => {
+        const serviceChargeAmount = serviceCharge !== null ? serviceCharge : 0;
+        const gstPercentage = parseFloat(gst) || 0;
+        const gstAmount = (serviceChargeAmount * gstPercentage) / 100;
+        return serviceChargeAmount + gstAmount;
+    };
+
+    useEffect(() => {
+        // Calculate total from selected products
+        const total = selectedProducts.reduce((acc, product) =>
+            acc + (parseFloat(product.product_price) * product.quantity), 0
+        );
+
+        // Calculate total charges including GST on service charge
+        const totalServiceCharge = calculateTotalAmount();
+        const totalCharges = (parseFloat(shippingCharge) || 0) + totalServiceCharge + (parseFloat(additionalCharge) || 0);
+
+        // Set total amount
+        setTotalAmount(total + totalCharges);
+    }, [selectedProducts, shippingCharge, serviceCharge, additionalCharge, gst]);
+
     return (
         <View style={styles.container}>
             <BackHeader title='Create invoice' />
@@ -57,179 +174,270 @@ const CreateInvoice = () => {
                     />
                 </View>
 
-                <TouchableOpacity
-                    onPress={() => NavigationService.navigate('BottomTab', { screen: 'Customer' })}
-                    style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Image source={require('../../assets/images/customer.png')}
-                        style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }} />
-                    <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>Add Customer</Text>
-                </TouchableOpacity>
-
+                <View>
+                    {Object.keys(customer).length === 0 ? (
+                        <TouchableOpacity
+                            onPress={() => NavigationService.navigate('BottomTab', { screen: 'Customer' })}
+                            style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
+                            <Image source={require('../../assets/images/customer.png')}
+                                style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }} />
+                            <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>Add Customer</Text>
+                        </TouchableOpacity>
+                    ) :
+                        null
+                    }
+                </View>
                 {/* ========================after add customer ====================== */}
-                <TouchableOpacity onPress={() => NavigationService.navigate('AddCustomerFrom')}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Web skill</Text>
-                        <Text style={{ ...styles.webskill_number, color: colors.tintText }}>9845125548</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
+                {
+                    Object.keys(customer).length === 0 ? null :
+                        (
+                            <TouchableOpacity onPress={() => NavigationService.navigate('EditCustomerFrom', { customerId: customer.id })}
+                                style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                                <View>
+                                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{customer.name}</Text>
+                                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>{customer.phone_number}</Text>
+                                </View>
+                                <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                            </TouchableOpacity>
+                        )
+                }
                 {/* ===========================END================================= */}
 
-                <TouchableOpacity
-                    onPress={() => NavigationService.navigate('SelectProduct')}
-                    style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Image source={require('../../assets/images/box.png')}
-                        style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }} />
-                    <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>Add Product</Text>
-                </TouchableOpacity>
+                <View>
+                    {Object.keys(selectedProducts).length === 0 ? (
+                        <TouchableOpacity
+                            onPress={() => NavigationService.navigate('SelectProduct')}
+                            style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
+                            <Image
+                                source={require('../../assets/images/box.png')}
+                                style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }}
+                            />
+                            <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>
+                                Add Product
+                            </Text>
+                        </TouchableOpacity>
+                    ) :
+                        null
+                    }
+                </View>
                 {/* ==========================after add product=========================== */}
 
-                <View style={{ ...styles.addpeoduct_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View style={{ ...styles.addpeoductprimary_view }}>
-                        <View>
-                            <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Test Product</Text>
-                            <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), fontFamily: FONTS.OpenSans.semibold, color: colors.buttonColor }}>₹100.00</Text>
-                        </View>
-                        <View style={{ alignItems: 'center' }}>
-                            <View style={styles.number_up_down_view}>
-                                <Pressable onPress={handleDecrement}>
-                                    <Icon name='minus-square' type='Feather' color={colors.buttonColor} />
-                                </Pressable>
-                                <Text style={{ ...styles.number_up_down_txt, color: colors.secondaryFontColor }}>{number.toString().padStart(2, '0')}</Text>
-                                <Pressable onPress={handleIncrement}>
-                                    <Icon name='plus-square' type='Feather' color={colors.buttonColor} />
-                                </Pressable>
+                {selectedProducts.map(product => (
+                    <View key={product.id} style={{ ...styles.addpeoduct_view, backgroundColor: colors.secondaryThemeColor }}>
+                        <View style={{ ...styles.addpeoductprimary_view }}>
+                            <View>
+                                <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{product.name}</Text>
+                                <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), fontFamily: 'OpenSans-SemiBold', color: colors.buttonColor }}>₹{product.product_price}</Text>
                             </View>
-                            <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), color: colors.buttonColor }}>Edit</Text>
+                            <View style={{ alignItems: 'center' }}>
+                                <View style={styles.number_up_down_view}>
+                                    <Pressable onPress={() => handleDecrement(product.id)}>
+                                        <Icon name='minus-square' type='Feather' color={colors.buttonColor} />
+                                    </Pressable>
+                                    <Text style={{ ...styles.number_up_down_txt, color: colors.secondaryFontColor }}>{product.quantity.toString().padStart(2, '0')}</Text>
+                                    <Pressable onPress={() => handleIncrement(product.id)}>
+                                        <Icon name='plus-square' type='Feather' color={colors.buttonColor} />
+                                    </Pressable>
+                                </View>
+                                <TouchableOpacity onPress={() => NavigationService.navigate('EditProductFrom', { productId: product.id })}>
+                                    <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), color: colors.buttonColor }}>Edit</Text>
+                                </TouchableOpacity>
+
+                            </View>
+                        </View>
+                        <View style={styles.addproductBottom_view}>
+                            <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>CGST : <Text style={styles.cgst_number}>₹{product.cgst}</Text></Text>
+                            <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>SGST : <Text style={styles.cgst_number}>₹{product.sgst}</Text></Text>
                         </View>
                     </View>
-                    <View style={styles.addproductBottom_view}>
-                        <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>CGST : <Text style={styles.cgst_number}>₹9.00</Text></Text>
-                        <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>SGST : <Text style={styles.cgst_number}>₹9.00</Text></Text>
-                    </View>
-                </View>
+                ))}
                 {/* ==========================END=========================== */}
 
                 {/* =============================Add More Product================================= */}
-                <TouchableOpacity
-                    onPress={() => NavigationService.navigate('SelectProduct')}
-                    style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Image source={require('../../assets/images/box.png')}
-                        style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }} />
-                    <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>Add More Product</Text>
-                </TouchableOpacity>
+                {selectedProducts.length > 0 && (
+                    <TouchableOpacity
+                        onPress={() => NavigationService.navigate('SelectProduct')}
+                        style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
+                        <Image
+                            source={require('../../assets/images/box.png')}
+                            style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }}
+                        />
+                        <Text style={{ ...styles.addcustomer_txt, color: colors.buttonColor }}>
+                            Add More Product
+                        </Text>
+                    </TouchableOpacity>
+                )}
                 {/* =========================================================END=========================== */}
-
-
-                <TouchableOpacity
-                    onPress={() => NavigationService.navigate('ShippingAddressFrom')}
-                    style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Shipping  Address </Text>
-                </TouchableOpacity>
 
                 {/* =============================Add More Shipping address ================================= */}
-                <TouchableOpacity onPress={() => NavigationService.navigate('ShippingAddressFrom')}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Shipping Address</Text>
-                        <Text style={{ ...styles.webskill_number, color: colors.tintText }}>121/2 Ramral agarwal lane kolkata 700050</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
+                {
+                    shippingAddress === null ? (
+                        <TouchableOpacity
+                            onPress={() => NavigationService.navigate('ShippingAddressFrom', { existingAddress: shippingAddress })}
+                            style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
+                            <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Shipping Address</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => NavigationService.navigate('ShippingAddressFrom', { existingAddress: shippingAddress })}
+                            style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                            <View>
+                                <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Shipping Address</Text>
+                                <Text style={{ ...styles.webskill_number, color: colors.tintText }}>
+                                    {`${shippingAddress.address1}, ${shippingAddress.address2}, ${shippingAddress.city}, ${shippingAddress.stateName}, ${shippingAddress.pincode}`}
+                                </Text>
+                            </View>
+                            <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                        </TouchableOpacity>
+                    )
+                }
                 {/* =========================================================END=========================== */}
+                {
+                    (shippingCharge === null) ? (
+                        <TouchableOpacity
+                            onPress={handleShipingCharge}
+                            style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
+                            <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>
+                                Shipping Charge
+                            </Text>
+                        </TouchableOpacity>
+                    ) : (
+                        shippingCharge > 0 && (
+                            <TouchableOpacity
+                                onPress={handleShipingCharge}
+                                style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                                <View>
+                                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>
+                                        Shipping Charge
+                                    </Text>
+                                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>
+                                        ₹{(typeof shippingCharge === 'number' ? shippingCharge.toFixed(2) : '0.00')}
+                                    </Text>
+                                </View>
+                                <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                            </TouchableOpacity>
+                        )
+                    )
+                }
 
-                <TouchableOpacity onPress={handleShipingCharge}
-                    style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Shipping Charge </Text>
-                </TouchableOpacity>
-
-                {/* =============================Add More Shipping charge ================================= */}
-                <TouchableOpacity onPress={handleShipingCharge}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Shipping Charge</Text>
-                        <Text style={{ ...styles.webskill_number, color: colors.tintText }}>₹50.00</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
                 {/* =========================================================END=========================== */}
-
-                <TouchableOpacity onPress={handleServiceCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Service Charge</Text>
-                </TouchableOpacity>
 
                 {/* =============================Add  Service charge ================================= */}
-                <TouchableOpacity onPress={handleServiceCharge}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Service Charge</Text>
-                        <Text style={{ ...styles.webskill_number, color: colors.tintText }}>₹50.00</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
+                {
+                    (serviceCharge === null) ? (
+                        <TouchableOpacity onPress={handleServiceCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
+                            <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Service Charge</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        serviceCharge > 0 && (
+                            <TouchableOpacity onPress={handleServiceCharge}
+                                style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                                <View>
+                                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Service Charge</Text>
+                                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>
+                                        {/* ₹{(typeof serviceCharge === 'number' ? serviceCharge.toFixed(2) : '0.00')} */}
+                                        ₹{calculateTotalAmount().toFixed(2)}
+                                    </Text>
+                                </View>
+                                <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                            </TouchableOpacity>
+                        )
+                    )
+                }
                 {/* =========================================================END=========================== */}
 
-                <TouchableOpacity onPress={handleAddtionalCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Additional Charge </Text>
-                </TouchableOpacity>
 
                 {/* =============================Add Additional charge ================================= */}
-                <TouchableOpacity onPress={handleAddtionalCharge}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Additional Charge </Text>
-                        <Text style={{ ...styles.webskill_number, color: colors.tintText }}>₹50.00</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
+                {
+                    (additionalCharge === null) ? (
+                        <TouchableOpacity onPress={handleAddtionalCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
+                            <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Additional Charge </Text>
+                        </TouchableOpacity>
+                    ) : (
+                        additionalCharge > 0 && (
+                            <TouchableOpacity onPress={handleAddtionalCharge}
+                                style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                                <View>
+                                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Additional Charge</Text>
+                                    <Text style={{ ...styles.webskill_number, color: colors.tintText }}>
+                                        ₹{(typeof additionalCharge === 'number' ? additionalCharge.toFixed(2) : '0.00')}
+                                    </Text>
+                                </View>
+                                <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                            </TouchableOpacity>
+                        )
+                    )
+                }
                 {/* =========================================================END=========================== */}
 
 
-                <TouchableOpacity onPress={handleAddNote} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
-                    <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Add Note</Text>
-                </TouchableOpacity>
 
-                
+
+
                 {/* =============================Add notes ================================= */}
-                <TouchableOpacity onPress={handleAddNote}
-                    style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                    <View>
-                        <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Additional Charge </Text>
-                        <Text numberOfLines={2} style={{ ...styles.webskill_number, maxWidth:'90%', color: colors.tintText }}>{"Lorem Ipsum is simply dummy text of the printing and typesetting industry."}</Text>
-                    </View>
-                    <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
-                </TouchableOpacity>
+                {
+                    (note === '') ? (
+                        <TouchableOpacity onPress={handleAddNote} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
+                            <Text style={{ ...styles.sipping_address_txt, color: colors.secondaryFontColor }}>Add Note</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        note.length > 0 && (
+                            <TouchableOpacity onPress={handleAddNote}
+                                style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                                <View>
+                                    <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>Additional Charge</Text>
+                                    <Text numberOfLines={2} style={{ ...styles.webskill_number, maxWidth: '90%', color: colors.tintText }}>
+                                        {note}
+                                    </Text>
+                                </View>
+                                <Icon name='pen' type='FontAwesome5' color={colors.buttonColor} />
+                            </TouchableOpacity>
+                        )
+                    )
+                }
+
                 {/* =========================================================END=========================== */}
 
-                <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-                 <Text style={{...styles.total_txt,color:colors.secondaryFontColor}}>Total  <Text>₹ 0.00</Text></Text>
-                 <Pressable 
-                 onPress={()=>NavigationService.navigate('InvoicePdfScreen')}
-                 style={{
-                    ...styles.genarate_btn,
-                    backgroundColor:colors.buttonColor
+
+
+            </ScrollView>
+            <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>Total  <Text>₹{totalAmount.toFixed(2)}</Text></Text>
+                <Pressable
+                    onPress={() => NavigationService.navigate('InvoicePdfScreen')}
+                    style={{
+                        ...styles.genarate_btn,
+                        backgroundColor: colors.buttonColor
                     }}>
                     <Text style={{
                         ...styles.genarate_btn_txt,
-                        color:colors.secondaryThemeColor
+                        color: colors.secondaryThemeColor
                     }}>Generate</Text>
-                 </Pressable>
-                </View>
-
-            </ScrollView>
+                </Pressable>
+            </View>
 
             <Modal
                 isVisible={ShippingChargeModal}
-                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0, }}
+                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0 }}
                 onBackButtonPress={() => setShippingChargeModal(false)}
                 onBackdropPress={() => setShippingChargeModal(false)}
             >
                 <View style={styles.modalView}>
-                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Shipping  Charge </Text>
+                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Shipping Charge</Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.Modal_inputcontainer_sty }}
+                        inputContainerStyle={styles.Modal_inputcontainer_sty}
                         inputStyle={{ ...styles.Modal_text_input, color: colors.secondaryFontColor }}
+                        value={shippingCharge !== null ? shippingCharge.toString() : ''}
+                        onChangeText={(text) => {
+                            const parsedValue = parseFloat(text.trim());
+                            if (!isNaN(parsedValue)) {
+                                setShippingCharge(parsedValue);
+                            } else {
+                                setShippingCharge('');
+                            }
+                        }}
+
+                        keyboardType='numeric'
                         rightAction={<Icon
                             name='rupee'
                             type='FontAwesome'
@@ -241,21 +449,33 @@ const CreateInvoice = () => {
                         textStyle={{ ...styles.Modal_buttn_txt, color: colors.buttontxtColor }}
                         style={styles.Modal_button_sty}
                         title="Save"
+                        onPress={() => setShippingChargeModal(false)}
                     />
                 </View>
             </Modal>
 
             <Modal
                 isVisible={ServiceChargeModal}
-                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0, }}
+                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0 }}
                 onBackButtonPress={() => setServiceChargeModal(false)}
                 onBackdropPress={() => setServiceChargeModal(false)}
             >
                 <View style={styles.servimemodalView}>
-                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Services Charge </Text>
+                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Service Charge</Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.Modal_inputcontainer_sty }}
+                        inputContainerStyle={styles.Modal_inputcontainer_sty}
                         inputStyle={{ ...styles.Modal_text_input, color: colors.secondaryFontColor }}
+
+                        value={serviceCharge !== null ? serviceCharge.toString() : ''}
+                        onChangeText={(text) => {
+                            const parsedValue = parseFloat(text.trim());
+                            if (!isNaN(parsedValue)) {
+                                setServiceCharge(parsedValue);
+                            } else {
+                                setServiceCharge('');
+                            }
+                        }}
+                        keyboardType='numeric'
                         rightAction={<Icon
                             name='rupee'
                             type='FontAwesome'
@@ -263,32 +483,52 @@ const CreateInvoice = () => {
                             color={colors.primaryFontColor}
                         />}
                     />
-                    <Text style={{ ...styles.input_title, marginHorizontal: 0, color: colors.secondaryFontColor }}>GST (%) optional  </Text>
+                    <Text style={{ ...styles.input_title, marginHorizontal: 0, color: colors.secondaryFontColor }}>GST (%) optional</Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.inputcontainer_sty, marginHorizontal: 0, }}
+                        inputContainerStyle={{ ...styles.inputcontainer_sty, marginHorizontal: 0 }}
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='18'
+                        placeholder='%'
+                        keyboardType='numeric'
+                        value={gst}
+                        onChangeText={(text) => {
+                            const parsedValue = parseFloat(text.trim());
+                            if (!isNaN(parsedValue)) {
+                                setGst(parsedValue.toString());
+                            } else {
+                                setGst(''); // Clear or set default if invalid
+                            }
+                        }}
                     />
-
                     <AppButton
                         textStyle={{ ...styles.Modal_buttn_txt, color: colors.buttontxtColor }}
                         style={styles.Modal_button_sty}
                         title="Save"
+                        onPress={() => setServiceChargeModal(false)}
                     />
                 </View>
             </Modal>
 
             <Modal
                 isVisible={AdditionalChargeModal}
-                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0, }}
+                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0 }}
                 onBackButtonPress={() => setAdditionalChargeModal(false)}
                 onBackdropPress={() => setAdditionalChargeModal(false)}
             >
                 <View style={styles.modalView}>
                     <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Additional Charge</Text>
                     <AppTextInput
-                        inputContainerStyle={{ ...styles.Modal_inputcontainer_sty }}
+                        inputContainerStyle={styles.Modal_inputcontainer_sty}
                         inputStyle={{ ...styles.Modal_text_input, color: colors.secondaryFontColor }}
+                        value={additionalCharge !== null ? additionalCharge.toString() : ''}
+                        onChangeText={(text) => {
+                            const parsedValue = parseFloat(text.trim());
+                            if (!isNaN(parsedValue)) {
+                                setAdditionalCharge(parsedValue);
+                            } else {
+                                setAdditionalCharge('');
+                            }
+                        }}
+                        keyboardType='numeric'
                         rightAction={<Icon
                             name='rupee'
                             type='FontAwesome'
@@ -299,32 +539,31 @@ const CreateInvoice = () => {
                     <AppButton
                         textStyle={{ ...styles.Modal_buttn_txt, color: colors.buttontxtColor }}
                         style={styles.Modal_button_sty}
-                        title="Add"
+                        title="Save"
+                        onPress={() => setAdditionalChargeModal(false)}
                     />
                 </View>
             </Modal>
 
             <Modal
                 isVisible={AddNoteModal}
-                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0, }}
+                style={{ justifyContent: 'flex-end', marginHorizontal: 0, marginBottom: 0 }}
                 onBackButtonPress={() => setAddNoteModal(false)}
                 onBackdropPress={() => setAddNoteModal(false)}
             >
-                <View style={styles.servimemodalView}>
-                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Notes</Text>
+                <View style={styles.modalView}>
+                    <Text style={{ ...styles.modal_title, color: colors.secondaryFontColor }}>Add Note</Text>
                     <AppTextInput
-                        multiline={true}
-                        numberOfLines={6}
-                        inputContainerStyle={{ ...styles.address_inputcontainer_sty }}
-                        inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
-                        placeholder='Say Something.....'
-                        textAlignVertical='top'
+                        inputContainerStyle={styles.Modal_inputcontainer_sty}
+                        inputStyle={{ ...styles.Modal_text_input, color: colors.secondaryFontColor }}
+                        value={note}
+                        onChangeText={(text) => setNote(text)}
                     />
-
                     <AppButton
                         textStyle={{ ...styles.Modal_buttn_txt, color: colors.buttontxtColor }}
                         style={styles.Modal_button_sty}
                         title="Save"
+                        onPress={() => setAddNoteModal(false)}
                     />
                 </View>
             </Modal>
@@ -469,22 +708,22 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(5),
         borderWidth: 1,
         paddingLeft: moderateScale(7),
-        marginTop:moderateScale(15)
+        marginTop: moderateScale(15)
     },
-    genarate_btn:{
-        height:moderateScale(40),
-        width:moderateScale(85),
-        alignItems:'center',
-        justifyContent:'center',
-        borderRadius:moderateScale(10)
+    genarate_btn: {
+        height: moderateScale(40),
+        width: moderateScale(85),
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: moderateScale(10)
     },
-    genarate_btn_txt:{
-        fontFamily:FONTS.OpenSans.semibold,
-        fontSize:moderateScale(13)
+    genarate_btn_txt: {
+        fontFamily: FONTS.OpenSans.semibold,
+        fontSize: moderateScale(13)
     },
-    total_txt:{
-        fontFamily:FONTS.OpenSans.semibold,
-        fontSize:moderateScale(14)
+    total_txt: {
+        fontFamily: FONTS.OpenSans.semibold,
+        fontSize: moderateScale(14)
     }
 });
 

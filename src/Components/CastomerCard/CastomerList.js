@@ -8,6 +8,7 @@ import NavigationService from '../../Services/Navigation';
 const CastomerList = ({ item, index, delAccount }) => {
     const colors = useTheme();
 
+
     return (
         <View>
             <View key={index} style={{ ...styles.container, backgroundColor: colors.secondaryThemeColor }}>
@@ -21,7 +22,9 @@ const CastomerList = ({ item, index, delAccount }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                 }}>
-                    <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
+                    <TouchableOpacity
+                    onPress={()=>NavigationService.navigate('CreateInvoice',{customerData:item})}
+                    style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
                         <Icon name='user-plus' type='FontAwesome5' size={12} color={colors.secondaryThemeColor} />
                     </TouchableOpacity>
                     <TouchableOpacity  onPress={() => NavigationService.navigate('EditCustomerFrom', { customerId: item.id })}

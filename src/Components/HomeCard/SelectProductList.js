@@ -34,7 +34,9 @@ const SelectProductList = ({ item, index,delProduct }) => {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                 }}>
-                    <TouchableOpacity style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
+                    <TouchableOpacity 
+                    onPress={()=>NavigationService.navigate('CreateInvoice',{productData :item})}
+                    style={{ ...styles.add_btn, backgroundColor: colors.buttonColor }}>
                         <Icon name='plus' type='AntDesign' size={20} color={colors.secondaryThemeColor} />
                     </TouchableOpacity>
                     <TouchableOpacity 

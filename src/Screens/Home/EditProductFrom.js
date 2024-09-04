@@ -16,7 +16,7 @@ import { ActivityIndicator } from 'react-native';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
-const AddProductFrom = () => {
+const EditProductFrom = () => {
     const colors = useTheme()
     const { userData } = useSelector(state => state.User);
     const route = useRoute();
@@ -35,7 +35,7 @@ const AddProductFrom = () => {
     const [SGST, setSGST] = useState('');
     const [cess, setcess] = useState('');
     const [isModalVisible, setModalVisible] = useState(false);
-    console.log('pnameeeeeeeeeeeeeeeeeeeeee', productName);
+    console.log('pnameeeeeeeeeeeeeeeeeeeeee====', productName);
 
 
     const toggleModal = () => {
@@ -374,4 +374,4 @@ const styles = StyleSheet.create({
 });
 
 //make this component available to the app
-export default AddProductFrom;
+export default EditProductFrom;

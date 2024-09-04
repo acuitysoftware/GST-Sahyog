@@ -57,6 +57,9 @@ async function setUserProfile(data) {
 async function UpdateUserProfile(data) {
     return await HttpClient.post('/update_user_profile.php', data);
 }
+async function getState(data) {
+    return await HttpClient.post('/invoice/fetch_state.php', data);
+}
 
 
 
@@ -77,7 +80,8 @@ const HomeService = {
     getSingleProduct,
     setUpdateProduct,
     setUserProfile,
-    UpdateUserProfile
+    UpdateUserProfile,
+    getState
 }
 
 export default HomeService;
