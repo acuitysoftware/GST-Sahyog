@@ -60,6 +60,20 @@ async function UpdateUserProfile(data) {
 async function getState(data) {
     return await HttpClient.post('/invoice/fetch_state.php', data);
 }
+async function createInvoice(data) {
+    return await HttpClient.post('/invoice/create_invoice.php', data);
+}
+async function FetchInvoiceList(data) {
+    return await HttpClient.post('/invoice/all_invoice.php', data);
+}
+async function FetchFullInvoiceData(data) {
+    return await HttpClient.post('/invoice/fetch_invoice.php', data);
+}
+async function setGstDatafatch(data) {
+    return await HttpClient.post('/dashboard/all_data_count.php', data);
+}
+
+
 
 
 
@@ -81,7 +95,11 @@ const HomeService = {
     setUpdateProduct,
     setUserProfile,
     UpdateUserProfile,
-    getState
+    getState,
+    createInvoice,
+    FetchInvoiceList,
+    FetchFullInvoiceData,
+    setGstDatafatch
 }
 
 export default HomeService;

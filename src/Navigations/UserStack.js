@@ -10,12 +10,14 @@ import InvoicePdfScreen from '../Screens/Home/InvoicePdfScreen';
 import SplashHome from '../Screens/Auth/SplashHome';
 import EditCustomerFrom from '../Screens/Home/EditCustomerFrom';
 import EditProductFrom from '../Screens/Home/EditProductFrom';
+import { useSelector } from 'react-redux';
 
 
 const Stack = createStackNavigator();
 
 // create a component
 const UserStack = () => {
+  const { login_status } = useSelector(state => state.User);
   return (
     <Stack.Navigator
             initialRouteName='SplashHome'
@@ -23,7 +25,7 @@ const UserStack = () => {
                 headerShown: false,
             }}
         >
-             <Stack.Screen name="Splash" component={SplashHome} />
+             <Stack.Screen name="SplashHome" component={SplashHome} />
             <Stack.Screen name="BottomTab" component={BottomTab} />
             <Stack.Screen name="CreateInvoice" component={CreateInvoice} />
             <Stack.Screen name="AddCustomerFrom" component={AddCustomerFrom} />
