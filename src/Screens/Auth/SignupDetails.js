@@ -1,6 +1,6 @@
 //import liraries
 import React, { Component, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, PermissionsAndroid, Pressable, TouchableOpacity } from 'react-native';
 import { View, Text, StyleSheet } from 'react-native';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { AppButton, AppTextInput, Icon, StatusBar, useTheme } from 'react-native-basic-elements';
@@ -13,6 +13,8 @@ import AuthService from '../../Services/Auth';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import Toast from "react-native-simple-toast";
+import HttpClient from '../../Utils/HttpClient';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -20,7 +22,7 @@ const SignupDetails = () => {
     const colors = useTheme()
     const route = useRoute()
     const regData = route.params.allData
-    console.log('resssssssssssssssssssssss=========================', regData);
+    // console.log('resssssssssssssssssssssss=========================', regData);
     const [GSTno, setGSTno] = useState(regData?.gst_no)
     const [buttonLoader, setButtonLoader] = useState(false);
     const [allRegData, setAllRegData] = useState({})
@@ -28,6 +30,11 @@ const SignupDetails = () => {
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
     };
+
+    const [isModalimg, setModalImg] = useState(false);
+    const [ImageData, setImageData] = useState([]);
+    const [selectedDocuments, setSelectedDocuments] = useState([]);
+
 
     const SignupSchema = yup.object().shape({
         signature: yup.string().required('Authorize Signature is required'),
@@ -48,6 +55,86 @@ const SignupDetails = () => {
             .required('Confirm Password is required'),
         // Add other fields validations here
     });
+
+    const openCamera = async (type, options) => {
+        try {
+            if (Platform.OS === 'android') {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.CAMERA,
+                    {
+                        title: "App Camera Permission",
+                        message: "App needs access to your camera",
+                        buttonNeutral: "Ask Me Later",
+                        buttonNegative: "Cancel",
+                        buttonPositive: "OK"
+                    }
+                );
+                if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                    console.log("Camera permission denied");
+                    return;
+                }
+            }
+            onButtonPress(type, options);
+        } catch (err) {
+            console.warn(err);
+        }
+    };
+
+  
+
+    const onButtonPress = async (type, options) => {
+        try {
+            const result = type === 'capture'
+                ? await launchCamera(options)
+                : await launchImageLibrary({ ...options, selectionLimit: 1 });
+
+            if (result?.assets && result.assets.length > 0) {
+                const asset = result.assets[0];
+                console.log('oooooooooooooooooooooooooooo', asset);
+
+                setSelectedDocuments([asset]);
+
+                const file = {
+                    uri: asset.uri,
+                    type: asset.type,
+                    name: asset.fileName,
+                };
+
+                if (file.uri && file.type && file.name) {
+                    console.log('Selected File Details:', file);
+
+                    const formData = new FormData();
+                    formData.append('file', {
+                        uri: file.uri,
+                        type: file.type,
+                        name: file.name,
+                    });
+
+                    try {
+                        console.log('Uploading file:=====================', JSON.stringify(formData));
+                        const response = await AuthService.uploadimage(formData, {})
+                        // const response = await HttpClient.upload('/upload.php', formData, {});
+                        console.log('Upload response:===================================', response);
+                        setImageData(response);
+                        // setImageData(response?.data?.url ? [response.data.url] : []);
+
+                    } catch (error) {
+                        console.error('Image Upload Error:', error);
+                    }
+                } else {
+                    console.error('Invalid file object properties:', file);
+                }
+
+                setModalImg(false);
+            }
+        } catch (error) {
+            console.error('Error in onButtonPress:', error);
+        }
+    };
+    // Additional logs
+    console.log('Selected Documents:===================11111111111111', selectedDocuments);
+    console.log('Image Data:=================000000000000000000', ImageData);
+
     const getSignupDetails = (values) => {
         let data = {
             "image": "",
@@ -98,12 +185,18 @@ const SignupDetails = () => {
                 <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Personal Details</Text>
                 <View style={styles.img_view}>
                     <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
+                        {/* <Image
+                            source={selectedDocuments.length > 0 ? { uri: selectedDocuments[0]?.uri } : require('../../assets/images/addimg_logo.png')}
+                            style={styles.add_img}
+                        /> */}
                         <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
                     </View>
-                    <View style={{ ...styles.upload_view, borderColor: colors.buttonColor }}>
+                    <Pressable
+                        // onPress={() => setModalImg(true)}
+                        style={{ ...styles.upload_view, borderColor: colors.buttonColor }}>
                         <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload Signature</Text>
                         <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
-                    </View>
+                    </Pressable>
                 </View>
 
                 <Formik
@@ -282,11 +375,58 @@ const SignupDetails = () => {
                     <TouchableOpacity
                         onPress={() => handelUserResister()}
                         style={{ ...styles.modalbutton_sty, backgroundColor: colors.buttonColor }}>
-                        { buttonLoader ?
-                                <ActivityIndicator size={'small'} color={'#fff'} />
-                                :
-                                <Text style={{ ...styles.button_txt_sty, color: colors.buttontxtColor }}>Ok</Text>
+                        {buttonLoader ?
+                            <ActivityIndicator size={'small'} color={'#fff'} />
+                            :
+                            <Text style={{ ...styles.button_txt_sty, color: colors.buttontxtColor }}>Ok</Text>
                         }
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            <Modal isVisible={isModalimg}
+                onBackButtonPress={() => setModalImg(false)}
+                onBackdropPress={() => setModalImg(false)}
+                transparent={true}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Upload Photo!</Text>
+                    <TouchableOpacity
+                        style={styles.modalbutton}
+                        onPress={() => openCamera('capture', {
+                            saveToPhotos: true,
+                            mediaType: 'photo',
+                            includeBase64: false,
+                            maxWidth: 500,
+                            maxHeight: 500,
+                            quality: 0.5
+                        })}
+                    >
+                        <Text style={styles.modalbuttonText}>
+                            <Icon name="camera" size={18} type='Entypo' />
+                            {" "}Camera
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.modalbutton}
+                        onPress={() => openCamera('library', {
+                            selectionLimit: 1,
+                            mediaType: 'photo',
+                            includeBase64: false,
+                            maxWidth: 500,
+                            maxHeight: 500,
+                            quality: 0.5
+                        })}
+                    >
+                        <Text style={styles.modalbuttonText}>
+                            <Icon name="image" size={18} type='Entypo' />
+                            {" "}Library
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.modalCancel}
+                        onPress={() => setModalImg(false)}>
+                        <Text style={styles.modalCancelText}>Cancel</Text>
                     </TouchableOpacity>
                 </View>
             </Modal>
@@ -416,7 +556,31 @@ const styles = StyleSheet.create({
         fontFamily: FONTS.Jost.medium,
         marginHorizontal: moderateScale(15),
         marginTop: moderateScale(5)
-    }
+    },
+    modalContainer: {
+        backgroundColor: '#fff',
+        padding: moderateScale(20),
+        margin: moderateScale(20),
+        borderRadius: moderateScale(10),
+        alignItems: 'center',
+    },
+    modalTitle: {
+        padding: moderateScale(10),
+        borderBottomWidth: 1,
+        marginBottom: moderateScale(15),
+        fontSize: moderateScale(18),
+        // color: Colors.black,
+        // fontFamily: 'sans-serif',
+    },
+    modalbutton: {
+        marginBottom: moderateScale(10),
+    },
+    modalbuttonText: {
+        fontSize: moderateScale(18),
+        padding: moderateScale(10),
+        // color: Colors.black,
+        // fontFamily: FONTS.Inter.medium,
+    },
 });
 
 //make this component available to the app

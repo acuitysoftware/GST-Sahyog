@@ -8,7 +8,6 @@ import App from './App';
 import { name as appName } from './app.json';
 import Store from './src/Redux/store';
 
-
 const Main = () => {
     return (
         <Provider

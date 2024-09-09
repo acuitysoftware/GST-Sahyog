@@ -18,25 +18,57 @@ const InvoicePdfScreen = () => {
     const route = useRoute()
     const { userData } = useSelector(state => state.User);
     const InvoiceID = route.params.invoiceId
-    console.log('invid55555555555555555555555', InvoiceID);
     const [loading, setLoading] = useState(true);
+    const [userProfile, setUserProfile] = useState([])
     const [invoiceFullData, setInvoiceFullData] = useState({})
     console.log('fulllllllllllllllllllllllllllllllllllllldataaaaaaaaaaaaaaaaaaaaaaaaaa', invoiceFullData);
-   
     const [totalQuantity, setTotalQuantity] = useState(null);
-    console.log('totalllllllllllllllllllll', totalQuantity);
     const [totalProduct, setTotalProduct] = useState([])
+    const [totalServiceCharge, setTotalServiceCharge] = useState({})
     const [totalProductPrice, setTotalProductPrice] = useState(0);
     const [cgstValue, setCgstValue] = useState(0);
     const [sgstValue, setSgstValue] = useState(0);
     const [gstValue, setGstValue] = useState(0);
-    console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', totalProductPrice)
+    console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', invoiceFullData?.service_charge?.serviceChargeAmount)
 
+
+    useEffect(() => {
+        if (invoiceFullData?.service_charge) {
+            const parsedServiceCharge = JSON.parse(invoiceFullData.service_charge);
+            setTotalServiceCharge(parsedServiceCharge)
+            console.log('Service Charge Amount================:', parsedServiceCharge.serviceChargeAmount); 
+        }
+    }, [invoiceFullData]);
 
 
     useEffect(() => {
         getInvoiceData();
     }, [])
+
+    useEffect(() => {
+        getUserProfile()
+    }, [])
+
+    const getUserProfile = (() => {
+        let data = {
+            "userid": userData.userid
+        }
+        setLoading(true)
+        HomeService.setUserProfile(data)
+            .then((res) => {
+                console.log('usepppppppppppppppppppppppppppppppp',res);
+                
+                if (res && res.error == false) {
+                    setUserProfile(res?.data)
+                    // setLoading(false)
+                }
+            })
+            .catch((err) => {
+                console.log('fatchprofileerrrrrrr', err);
+                // setLoading(false)
+            })
+    })
+
 
     const getInvoiceData = (() => {
         let data = {
@@ -49,6 +81,7 @@ const InvoicePdfScreen = () => {
                 console.log('fullllllllllllllllllllllinvoice=====================', JSON.stringify(res));
                 if (res && res.error == false) {
                     setInvoiceFullData(res.data)
+                    // setTotalServiceCharge(res?.data?.service_charge)
                     setTotalProduct(res?.data?.product)
                     const totalQuantity = res?.data?.product?.reduce((sum, item) => sum + parseFloat(item.quantity), 0);
                     setTotalQuantity(totalQuantity)
@@ -99,8 +132,6 @@ const InvoicePdfScreen = () => {
       }, [totalProduct]);
 
 
-
-
     return (
         <View style={styles.container}>
             <BackHeader title='invoice' />
@@ -116,31 +147,33 @@ const InvoicePdfScreen = () => {
                                 <View style={styles.shop_view}>
                                     <View>
                                         <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Fashion Shop</Text>
+                                        {/* <Text style={{
+                                            ...styles.gstin_txt,
+                                            color: colors.secondaryFontColor
+                                        }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text> */}
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text>
+                                        }}>State Code  : <Text style={styles.gstin_number}>{userProfile?.state}</Text></Text>
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>State Code  : <Text style={styles.gstin_number}>09</Text></Text>
+                                        }}>Mobile : <Text style={styles.gstin_number}>{userProfile?.mobile_no}</Text></Text>
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>Register Office : <Text style={styles.gstin_number}>Kolkata ,700050 </Text></Text>
-                                        <Text style={{
-                                            ...styles.gstin_txt,
-                                            color: colors.secondaryFontColor
-                                        }}>Mobile : <Text style={styles.gstin_number}>987524447</Text></Text>
-                                        <Text style={{
-                                            ...styles.gstin_txt,
-                                            color: colors.secondaryFontColor
-                                        }}>Email : <Text style={styles.gstin_number}>fashion@mail.com</Text></Text>
+                                        }}>Email : <Text style={styles.gstin_number}>{userProfile?.email}</Text></Text>
+                                       
+                                      
                                     </View>
                                     <View style={{ ...styles.img_view, backgroundColor: colors.borderColor }}>
                                         <Image source={require('../../assets/images/fashion.png')} style={styles.shop_img} />
                                     </View>
                                 </View>
+                                <Text style={{
+                                            ...styles.gstin_txt,
+                                            color: colors.secondaryFontColor
+                                        }}>Register Office : <Text style={styles.gstin_number}>{userProfile?.address}</Text></Text>
                                 <View style={styles.shop_bottom_view}>
                                     <View>
                                         <Text style={{
@@ -161,14 +194,14 @@ const InvoicePdfScreen = () => {
                             <View style={{ ...styles.line, borderColor: colors.borderColor }} />
                             <View style={{ marginTop: moderateScale(10) }}>
                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Bill To</Text>
+                                {/* <Text style={{
+                                    ...styles.gstin_txt,
+                                    color: colors.secondaryFontColor
+                                }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text> */}
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
-                                }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text>
-                                <Text style={{
-                                    ...styles.gstin_txt,
-                                    color: colors.secondaryFontColor
-                                }}>State Code  : <Text style={styles.gstin_number}>{invoiceFullData?.shipping_address?.state}</Text></Text>
+                                }}>State Code  : <Text style={styles.gstin_number}>{invoiceFullData?.customer?.state}</Text></Text>
                                 <Text style={{ ...styles.shop_name, marginTop: moderateScale(5), color: colors.secondaryFontColor }}>{invoiceFullData?.customer?.name}</Text>
 
                                 <Text style={{
@@ -176,13 +209,13 @@ const InvoicePdfScreen = () => {
                                     color: colors.secondaryFontColor
                                 }}>
                                     Address: <Text style={styles.gstin_number}>
-                                        {invoiceFullData?.shipping_address?.address1 + ' ' + invoiceFullData?.shipping_address?.address2}
+                                        {invoiceFullData?.customer?.address}
                                     </Text>
                                 </Text>
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
-                                }}>Pin Code  : <Text style={styles.gstin_number}>{invoiceFullData?.shipping_address?.pincode}</Text></Text>
+                                }}>Pin Code  : <Text style={styles.gstin_number}>{invoiceFullData?.customer?.pin_code}</Text></Text>
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
@@ -191,21 +224,21 @@ const InvoicePdfScreen = () => {
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
                                 }}>Email  : <Text style={styles.gstin_number}>{invoiceFullData?.customer?.email}</Text></Text>
-                                <Text style={{
+                                {/* <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
                                 }}>Eway bill Number  : <Text style={styles.gstin_number}>545585</Text></Text>
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
-                                }}>Einvoice Number  : <Text style={styles.gstin_number}>54845585</Text></Text>
+                                }}>Einvoice Number  : <Text style={styles.gstin_number}>54845585</Text></Text> */}
                             </View>
                             <View style={{ marginTop: moderateScale(15) }}>
                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Ship To</Text>
-                                <Text style={{
+                                {/* <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
-                                }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text>
+                                }}>GSTIN : <Text style={styles.gstin_number}>29AAACH7409R1ZX</Text></Text> */}
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
@@ -216,7 +249,10 @@ const InvoicePdfScreen = () => {
                                     color: colors.secondaryFontColor
                                 }}>
                                     Address: <Text style={styles.gstin_number}>
-                                        {invoiceFullData?.shipping_address?.address1 + ' ' + invoiceFullData?.shipping_address?.address2}
+                                        {invoiceFullData?.shipping_address?.address1 + ' ' 
+                                        + invoiceFullData?.shipping_address?.address2 + ' '
+                                        + invoiceFullData?.shipping_address?.city
+                                        }
                                     </Text>
                                 </Text>
                                 <Text style={{
@@ -231,14 +267,14 @@ const InvoicePdfScreen = () => {
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
                                 }}>Email  : <Text style={styles.gstin_number}>{invoiceFullData?.customer?.email}</Text></Text>
-                                <Text style={{
+                                {/* <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
                                 }}>Eway bill Number  : <Text style={styles.gstin_number}>545585</Text></Text>
                                 <Text style={{
                                     ...styles.gstin_txt,
                                     color: colors.secondaryFontColor
-                                }}>Einvoice Number  : <Text style={styles.gstin_number}>54845585</Text></Text>
+                                }}>Einvoice Number  : <Text style={styles.gstin_number}>54845585</Text></Text> */}
                             </View>
                             <View style={{ ...styles.line, borderColor: colors.borderColor }} />
 
@@ -282,7 +318,7 @@ const InvoicePdfScreen = () => {
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Service Charge </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.service_charge}</Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{totalServiceCharge?.serviceChargeAmount}</Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>GST (18%) </Text>

@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-nat
 import BackHeader from '../../Components/Header/BackHeader';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
-import { AppButton, AppTextInput, useTheme } from 'react-native-basic-elements';
+import { AppButton, AppTextInput, Picker, useTheme } from 'react-native-basic-elements';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
@@ -27,9 +27,13 @@ const EditCustomerFrom = () => {
     const [customerAddress, setCustomerAddress] = useState('')
     const [buttonLoader, setButtonLoader] =useState(false);
     const [loading, setLoading] = useState(true);
+    const [Satate, setSatate] = useState([]);
+    const [stateId,setStateId] = useState('')
+
 
     useEffect(() => {
         fatchCustomer()
+        getState();
     }, [])
 
     const fatchCustomer = (() => {
@@ -46,6 +50,7 @@ const EditCustomerFrom = () => {
                 setCustomerMobile(res?.data?.phone_number)
                 setCustomerEmail(res?.data?.email)
                 setCustomerPin(res?.data?.pin_code)
+                setStateId(res?.data?.state)
                 setCustomerAddress(res?.data?.address)
                 setLoading(false)
             }
@@ -56,6 +61,22 @@ const EditCustomerFrom = () => {
         })
         
     })
+
+    const getState = () => {
+        let data = {
+            "userid": userData?.userid
+        };
+        HomeService.getState(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setSatate(res.data);
+                }
+            })
+            .catch((err) => {
+                console.log('stateError', err);
+            });
+    };
+
 
     const getUpdateCustomer = (() => {
         let hasError = false;
@@ -166,6 +187,17 @@ const EditCustomerFrom = () => {
                             value={customerPin}
                             onChangeText={(val) => setCustomerPin(val)}
                         />
+                         <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>State</Text>
+                            <Picker
+                                labelKey="name"
+                                valueKey="id"
+                                placeholder="Select State"
+                                options={Satate}
+                                textStyle={{ ...styles.picker_txt, color: colors.secondaryFontColor }}
+                                containerStyle={{ ...styles.picker_sty, borderColor: colors.borderColor }}
+                                selectedValue={stateId}
+                                onValueChange={(val)=>setStateId(val)}
+                            />
                         <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                         <AppTextInput
                             multiline={true}
@@ -278,6 +310,17 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    picker_sty: {
+        height: moderateScale(45),
+        borderRadius: moderateScale(6),
+        marginTop: moderateScale(10),
+        marginHorizontal: moderateScale(15)
+    },
+    picker_txt: {
+        fontSize: moderateScale(14),
+        fontFamily: FONTS.Jost.regular
     },
 });
 

@@ -4,6 +4,7 @@ import { MAIN_BASE_URL } from './EnvVariables';
 
 const BASE_URL = `https://sahyog.acuitysoftware.in/sahyog`;
 const MAINIMAGEURL = "https://sahyog.acuitysoftware.in/sahyog";
+const IMGURL = `https://sahyog.acuitysoftware.in`
 
 function get(endpoint, params) {
     return request(endpoint, params);
@@ -34,7 +35,7 @@ async function request(endpoint, params = null, method = 'GET') {
 
         xmlRequest.setRequestHeader('Accept', '*/*');
         xmlRequest.setRequestHeader('Content-Type', 'application/json');
-        xmlRequest.setRequestHeader('Authorization',token);
+        xmlRequest.setRequestHeader('Authorization', token);
 
         if (method === 'GET') {
             xmlRequest.send();
@@ -72,11 +73,11 @@ async function upload(endpoint, file, additionalData = {}, tokenCustom = null) {
     }
 
     let token = tokenCustom || await AuthService.getToken();
-    let apiUrl = MAINIMAGEURL + endpoint;
+    let apiUrl = `${IMGURL}/${endpoint}`;
 
     console.log('File object:', file);
     console.log('File path:', file.uri);
-    console.log('apiUrl', apiUrl);
+    console.log('API URL:', apiUrl);
 
     const data = new FormData();
     data.append('image_file', {
@@ -89,22 +90,21 @@ async function upload(endpoint, file, additionalData = {}, tokenCustom = null) {
         data.append(key, additionalData[key]);
     });
 
-    return fetch(apiUrl, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-        },
-        method: 'POST',
-        body: data,
-    })
-    .then(response => response.json())
-    .then(response => {
-        return response;
-    })
-    .catch(error => {
+    try {
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Authorization': token,
+                'Accept': 'application/json',
+            },
+            method: 'POST',
+            body: data,
+        });
+        const jsonResponse = await response.json();
+        return jsonResponse;
+    } catch (error) {
         console.error('Upload Error:', error);
         throw error;
-    });
+    }
 }
 
 

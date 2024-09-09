@@ -4,19 +4,22 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ActivityIn
 import BackHeader from '../../Components/Header/BackHeader';
 import { moderateScale } from '../../Constants/PixelRatio';
 import { Colors } from '../../Constants/Colors';
-import { AppButton, AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
+import { AppButton, AppTextInput, Icon, Picker, useTheme } from 'react-native-basic-elements';
 import { FONTS } from '../../Constants/Fonts';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
 import Toast from "react-native-simple-toast";
 import NavigationService from '../../Services/Navigation';
+import AuthService from '../../Services/Auth';
+import { setUser } from '../../Redux/reducer/User';
 
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const Profile = () => {
     const colors = useTheme()
+    const dispatch = useDispatch()
     const { userData } = useSelector(state => state.User)
     const [loading, setLoading] = useState(true);
     const [authSignature, setAuthSignature] = useState('')
@@ -25,9 +28,13 @@ const Profile = () => {
     const [phoneNumber, setPhoneNumber] = useState('')
     const [address, setAddress] = useState('')
     const [buttonLoader, setButtonLoader] = useState(false);
+    const [Satate, setSatate] = useState([]);
+    const [stateId,setStateId] = useState('')
+
 
     useEffect(() => {
         getUserProfile()
+        getState();
     }, [getUpdateProfile])
 
     const getUserProfile = (() => {
@@ -37,12 +44,15 @@ const Profile = () => {
         setLoading(true)
         HomeService.setUserProfile(data)
             .then((res) => {
+                console.log('usepppppppppppppppppppppppppppppppp',res);
+                
                 if (res && res.error == false) {
                     setAuthSignature(res?.data?.auth_signature)
                     setName(res?.data?.name)
                     setEmail(res?.data?.email)
                     setPhoneNumber(res?.data?.phone)
                     setAddress(res?.data?.address)
+                    setStateId(res?.data?.state)
                     setLoading(false)
                 }
             })
@@ -52,6 +62,22 @@ const Profile = () => {
             })
     })
 
+    const getState = () => {
+        let data = {
+            "userid": userData?.userid
+        };
+        HomeService.getState(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setSatate(res.data);
+                }
+            })
+            .catch((err) => {
+                console.log('stateError', err);
+            });
+    };
+
+
     const getUpdateProfile = (() => {
         let data = {
             "auth_signature": authSignature,
@@ -59,15 +85,18 @@ const Profile = () => {
             "phone": phoneNumber,
             "email": email,
             "userid": userData.userid,
+            "state":stateId,
             "address": address
         }
-        // console.log('udaaaaaaatatttttttttt',data);
+        console.log('udaaaaaaatatttttttttt',data);
         setButtonLoader(true)
         HomeService.UpdateUserProfile(data)
             .then((res) => {
                 if (res && res.error == false) {
                     setButtonLoader(false)
                     Toast.show(res.message);
+                    // dispatch(setUser({ ...userData, ...res.data }))
+                    // AuthService.setAccount({ ...userData, ...res.data })
                     NavigationService.navigate('BottomTab', { screen: 'Home' })
                 }
                 else {
@@ -141,6 +170,17 @@ const Profile = () => {
                                 keyboardType='phone-pad'
                                 value={phoneNumber}
                                 onChangeText={(val) => setPhoneNumber(val)}
+                            />
+                            <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>State</Text>
+                            <Picker
+                                labelKey="name"
+                                valueKey="id"
+                                placeholder="Select State"
+                                options={Satate}
+                                textStyle={{ ...styles.picker_txt, color: colors.secondaryFontColor }}
+                                containerStyle={{ ...styles.picker_sty, borderColor: colors.borderColor }}
+                                selectedValue={stateId}
+                                onValueChange={(val)=>setStateId(val)}
                             />
                             <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                             <AppTextInput
@@ -265,6 +305,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    picker_sty: {
+        height: moderateScale(45),
+        borderRadius: moderateScale(6),
+        marginTop: moderateScale(10),
+        marginHorizontal: moderateScale(15)
+    },
+    picker_txt: {
+        fontSize: moderateScale(14),
+        fontFamily: FONTS.Jost.regular
     },
 });
 

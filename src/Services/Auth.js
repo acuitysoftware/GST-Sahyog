@@ -24,6 +24,10 @@ const setSignUpDetails = async (data) => {
 const setLogin = async (data) => {
     return HttpClient.post('/auth.php', data);
 }
+async function uploadimage(data) {
+    let endpoint = '/upload.php';
+    return HttpClient.upload(endpoint, 'POST', data, {});
+};
 
 
 const AuthService = {
@@ -33,7 +37,8 @@ const AuthService = {
     getToken,
     setSignUp,
     setSignUpDetails,
-    setLogin
+    setLogin,
+    uploadimage
 }
 
 export default AuthService;

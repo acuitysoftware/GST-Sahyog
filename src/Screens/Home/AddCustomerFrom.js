@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { FONTS } from '../../Constants/Fonts';
 import { moderateScale } from '../../Constants/PixelRatio';
-import { AppButton, AppTextInput, useTheme } from 'react-native-basic-elements';
+import { AppButton, AppTextInput, Picker, useTheme } from 'react-native-basic-elements';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
@@ -22,7 +22,30 @@ const AddCustomerFrom = () => {
     const [customerEmail, setCustomerEmail] = useState('')
     const [customerPin, setCustomerPin] = useState('')
     const [customerAddress, setCustomerAddress] = useState('')
-    const [buttonLoader, setButtonLoader] =useState(false);
+    const [buttonLoader, setButtonLoader] = useState(false);
+
+
+    const [Satate, setSatate] = useState([]);
+    const [stateId, setStateId] = useState('')
+
+    useEffect(() => {
+        getState()
+    }, [])
+
+    const getState = () => {
+        let data = {
+            "userid": userData?.userid
+        };
+        HomeService.getState(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setSatate(res.data);
+                }
+            })
+            .catch((err) => {
+                console.log('stateError', err);
+            });
+    };
 
     const getAddCustomer = (() => {
         let hasError = false;
@@ -46,6 +69,11 @@ const AddCustomerFrom = () => {
             hasError = true;
             return false
         }
+        if (stateId == '') {
+            Toast.show('Please select State');
+            hasError = true;
+            return false
+        }
         if (customerAddress == '') {
             Toast.show('Please enter Address');
             hasError = true;
@@ -58,18 +86,19 @@ const AddCustomerFrom = () => {
             "phone_number": customerMobile,
             "email": customerEmail,
             "pin_code": customerPin,
+            "state":stateId,
             "address": customerAddress
         }
         // console.log('adddddddcusssssssssssss', data);
         setButtonLoader(true)
         HomeService.setAddCustomer(data)
             .then((res) => {
-                // console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
+                console.log('customerrrrrrrrrrrrrrrrrrrrrrrresssss565555555555555', res);
                 if (res && res.error === false) {
                     setButtonLoader(false)
                     Toast.show(res.message);
                     NavigationService.navigate('BottomTab', { screen: 'Customer' })
-                    
+
                 } else {
                     setButtonLoader(false)
                     Toast.show(res.message);
@@ -125,6 +154,21 @@ const AddCustomerFrom = () => {
                         value={customerPin}
                         onChangeText={(val) => setCustomerPin(val)}
                     />
+
+                    <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>State</Text>
+                    <Picker
+                        labelKey="name"
+                        valueKey="id"
+                        placeholder="Select State"
+                        options={Satate}
+                        textStyle={{ ...styles.picker_txt, color: colors.secondaryFontColor }}
+                        containerStyle={{ ...styles.picker_sty, borderColor: colors.borderColor }}
+                        selectedValue={stateId}
+                        onValueChange={(val) => setStateId(val)}
+                    />
+
+
+
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                     <AppTextInput
                         multiline={true}
@@ -230,6 +274,18 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginTop: moderateScale(20),
         marginBottom: moderateScale(20)
+    },
+
+
+    picker_sty: {
+        height: moderateScale(45),
+        borderRadius: moderateScale(6),
+        marginTop: moderateScale(10),
+        marginHorizontal: moderateScale(15)
+    },
+    picker_txt: {
+        fontSize: moderateScale(14),
+        fontFamily: FONTS.Jost.regular
     },
 });
 

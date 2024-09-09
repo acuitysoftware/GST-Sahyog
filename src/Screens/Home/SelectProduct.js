@@ -1,7 +1,7 @@
 
 //import liraries
 import React, { Component, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import BackHeader from '../../Components/Header/BackHeader';
@@ -47,12 +47,10 @@ const SelectProduct = () => {
         let data = {
             "userid": userData?.userid,
             "product_id": itemId
-        };
-        console.log('delllllllllllllllllllllllidddddddddddddd',data);
-        
+        };      
         HomeService.deleteProduct(data)
             .then((res) => {
-                console.log('delllllllllllllllllproductttttttttttt',res);
+                // console.log('delllllllllllllllllproductttttttttttt',res);
                 if (res && res.error === false) {
                     // Remove deleted customer from the list
                     setAllProduct(prevCustomers => prevCustomers.filter(customer => customer.id !== itemId));

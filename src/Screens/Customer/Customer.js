@@ -29,7 +29,7 @@ const Customer = () => {
         setLoading(true);
         HomeService.setAllAccount(data)
             .then((res) => {
-                console.log('Response:', JSON.stringify(res));
+                console.log('Response:=================', JSON.stringify(res));
                 if (res && res.error === false) {
                     setAllCustomer(res.data);
                 }
