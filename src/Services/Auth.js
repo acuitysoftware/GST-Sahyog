@@ -25,7 +25,7 @@ const setLogin = async (data) => {
     return HttpClient.post('/auth.php', data);
 }
 async function uploadimage(data) {
-    let endpoint = '/upload.php';
+    let endpoint = '/upload_customer.php';
     return HttpClient.upload(endpoint, 'POST', data, {});
 };
 

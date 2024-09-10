@@ -5,6 +5,7 @@ import { MAIN_BASE_URL } from './EnvVariables';
 const BASE_URL = `https://sahyog.acuitysoftware.in/sahyog`;
 const MAINIMAGEURL = "https://sahyog.acuitysoftware.in/sahyog";
 const IMGURL = `https://sahyog.acuitysoftware.in`
+// https://sahyog.acuitysoftware.in/sahyog
 
 function get(endpoint, params) {
     return request(endpoint, params);
@@ -73,7 +74,7 @@ async function upload(endpoint, file, additionalData = {}, tokenCustom = null) {
     }
 
     let token = tokenCustom || await AuthService.getToken();
-    let apiUrl = `${IMGURL}/${endpoint}`;
+    let apiUrl = `${MAINIMAGEURL}/${endpoint}`;
 
     console.log('File object:', file);
     console.log('File path:', file.uri);

@@ -191,7 +191,7 @@ const CreateInvoice = () => {
         setTotalAmount(total + totalCharges);
     }, [selectedProducts, shippingCharge, totalSCAmount, additionalCharge, gst]);
 
-    console.log('invoiceeeeeeeeeeeeeeeeeeeeeeeeeeeeee', invoiceNo);
+    // console.log('invoiceeeeeeeeeeeeeeeeeeeeeeeeeeeeee', invoiceNo);
 
     const handleInvoiceSubmit = (() => {
         let data = {

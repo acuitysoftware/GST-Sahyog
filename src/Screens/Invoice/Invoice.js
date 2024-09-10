@@ -25,7 +25,7 @@ const Invoice = () => {
         setLoading(true)
         HomeService.FetchInvoiceList(data)
             .then((res) => {
-                console.log('invoiceeeeeeeeeeeeeeeeeeeelist555555555555555', JSON.stringify(res));
+                // console.log('invoiceeeeeeeeeeeeeeeeeeeelist555555555555555', JSON.stringify(res));
                 if (res && res.error == false) {
                     setInvoiceData(res.data)
                     setLoading(false)

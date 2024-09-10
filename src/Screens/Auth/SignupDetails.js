@@ -32,9 +32,11 @@ const SignupDetails = () => {
     };
 
     const [isModalimg, setModalImg] = useState(false);
-    const [ImageData, setImageData] = useState([]);
+    const [isModalCompanyimg, setModalCompanyImg] = useState(false);
+    const [ImageSignData, setImageSignData] = useState(" ");
     const [selectedDocuments, setSelectedDocuments] = useState([]);
-
+    const [ImageCompanyData, setImageCompanyData] = useState(" ");
+    const [selectedCompanyDocuments, setSelectedCompanyDocuments] = useState([]);
 
     const SignupSchema = yup.object().shape({
         signature: yup.string().required('Authorize Signature is required'),
@@ -80,46 +82,54 @@ const SignupDetails = () => {
         }
     };
 
-  
 
     const onButtonPress = async (type, options) => {
         try {
+            // Capture or select image from the library
             const result = type === 'capture'
                 ? await launchCamera(options)
                 : await launchImageLibrary({ ...options, selectionLimit: 1 });
 
             if (result?.assets && result.assets.length > 0) {
-                const asset = result.assets[0];
-                console.log('oooooooooooooooooooooooooooo', asset);
-
+                const asset = result.assets[0]; // First image selected
+                console.log('Selected Image0:========================', asset);
                 setSelectedDocuments([asset]);
 
+                // Prepare the file object for upload
                 const file = {
                     uri: asset.uri,
                     type: asset.type,
-                    name: asset.fileName,
+                    name: asset.fileName || `image_${Date.now()}.jpg`, // Fallback to timestamp if no name
                 };
 
                 if (file.uri && file.type && file.name) {
-                    console.log('Selected File Details:', file);
+                    console.log('File Details:=====================', file);
 
+                    // Create form data for the file upload
                     const formData = new FormData();
-                    formData.append('file', {
-                        uri: file.uri,
-                        type: file.type,
-                        name: file.name,
-                    });
+                    formData.append('file',file);
 
                     try {
-                        console.log('Uploading file:=====================', JSON.stringify(formData));
-                        const response = await AuthService.uploadimage(formData, {})
-                        // const response = await HttpClient.upload('/upload.php', formData, {});
-                        console.log('Upload response:===================================', response);
-                        setImageData(response);
-                        // setImageData(response?.data?.url ? [response.data.url] : []);
-
-                    } catch (error) {
-                        console.error('Image Upload Error:', error);
+                        console.log('Uploading file:==============================', JSON.stringify(formData));
+                        // Use the fetch API to send a POST request
+                        const response = await fetch('https://sahyog.acuitysoftware.in/sahyog/upload_signature.php', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        });
+                        const responseJson = await response.json();
+                        console.log('Upload Successful:=============================signnnnnnnnnnnnnn======================', responseJson);
+                        // Handle the response
+                        if (responseJson?.url) {
+                            // console.log('Upload Successful:===================================================', responseJson.url);
+                            setImageSignData(responseJson.url);
+                        } else {
+                            console.log('Upload Response:', responseJson);
+                        }
+                    } catch (uploadError) {
+                        console.error('Image Upload Error:', uploadError);
                     }
                 } else {
                     console.error('Invalid file object properties:', file);
@@ -131,20 +141,104 @@ const SignupDetails = () => {
             console.error('Error in onButtonPress:', error);
         }
     };
+
+    const openCameraModal = async (type, options) => {
+        try {
+            if (Platform.OS === 'android') {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.CAMERA,
+                    {
+                        title: "App Camera Permission",
+                        message: "App needs access to your camera",
+                        buttonNeutral: "Ask Me Later",
+                        buttonNegative: "Cancel",
+                        buttonPositive: "OK"
+                    }
+                );
+                if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+                    console.log("Camera permission denied");
+                    return;
+                }
+            }
+            OpenButtonPress(type, options);
+        } catch (err) {
+            console.warn(err);
+        }
+    };
+
+    const OpenButtonPress = async (type, options) => {
+        try {
+            // Capture or select image from the library
+            const result = type === 'capture'
+                ? await launchCamera(options)
+                : await launchImageLibrary({ ...options, selectionLimit: 1 });
+
+            if (result?.assets && result.assets.length > 0) {
+                const asset = result.assets[0]; // First image selected
+                console.log('Selected Image:======================', asset);
+                setSelectedCompanyDocuments([asset]);
+
+                // Prepare the file object for upload
+                const file = {
+                    uri: asset.uri,
+                    type: asset.type,
+                    name: asset.fileName || `image_${Date.now()}.jpg`, // Fallback to timestamp if no name
+                };
+
+                if (file.uri && file.type && file.name) {
+                    console.log('File Details:', file);
+                    // Create form data for the file upload
+                    const formData = new FormData();
+                    formData.append('file',file);
+
+                    try {
+                        console.log('Uploading file:', JSON.stringify(formData));
+                        // Use the fetch API to send a POST request
+                        const response = await fetch('https://sahyog.acuitysoftware.in/sahyog/upload_customer.php', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        });
+                        const responseJson = await response.json();
+                        console.log('Upload Successful:============================customerrrrrrrrrrrrrrrrrrrr=====================', responseJson);
+                        // Handle the response
+                        if (responseJson?.url) {
+                            console.log('Upload Successful:', responseJson.url);
+                            setImageCompanyData(responseJson.url);
+                        } else {
+                            console.log('Upload Response:', responseJson);
+                        }
+                    } catch (uploadError) {
+                        console.error('Image Upload Error:', uploadError);
+                    }
+                } else {
+                    console.error('Invalid file object properties:', file);
+                }
+
+                setModalCompanyImg(false);
+            }
+        } catch (error) {
+            console.error('Error in onButtonPress:', error);
+        }
+    };
+
     // Additional logs
     console.log('Selected Documents:===================11111111111111', selectedDocuments);
-    console.log('Image Data:=================000000000000000000', ImageData);
+
 
     const getSignupDetails = (values) => {
         let data = {
-            "image": "",
+            "signature_img_url": ImageSignData,
             "gst_no": values.GSTno || " ",
             "mobile_no": values.mobile,
             "auth_signature": values.signature,
             "name": values.name,
             "phone": values.mobile,
             "email": values.email,
-            "password": values.password
+            "password": values.password,
+            "customer_img_url": ImageCompanyData
         };
         console.log('Signup Data:============', data);
         setAllRegData(data)
@@ -155,6 +249,7 @@ const SignupDetails = () => {
         setButtonLoader(true);
         AuthService.setSignUpDetails(allRegData)
             .then((res) => {
+                console.log('signup resulttttttttttttttttttttttttttttt', res);
                 if (res && res.error == false) {
                     NavigationService.navigate('OldLogin', { allData: res?.data });
                     Toast.show(res.message);
@@ -185,14 +280,20 @@ const SignupDetails = () => {
                 <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Personal Details</Text>
                 <View style={styles.img_view}>
                     <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
-                        {/* <Image
-                            source={selectedDocuments.length > 0 ? { uri: selectedDocuments[0]?.uri } : require('../../assets/images/addimg_logo.png')}
-                            style={styles.add_img}
-                        /> */}
-                        <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                        {
+                            selectedDocuments.length > 0 ?
+                                <Image
+                                    source={{ uri: selectedDocuments[0]?.uri }}
+                                    style={styles.add_img_sty}
+                                />
+                                :
+                                <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                        }
+
+
                     </View>
                     <Pressable
-                        // onPress={() => setModalImg(true)}
+                        onPress={() => setModalImg(true)}
                         style={{ ...styles.upload_view, borderColor: colors.buttonColor }}>
                         <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload Signature</Text>
                         <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
@@ -306,12 +407,25 @@ const SignupDetails = () => {
                             <Text style={{ ...styles.personal_txt, color: colors.secondaryFontColor }}>Company Details</Text>
                             <View style={styles.img_view}>
                                 <View style={{ ...styles.img_bix, borderColor: colors.borderColor }}>
-                                    <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                                    {
+                                        selectedCompanyDocuments.length > 0 ?
+                                            <Image
+                                                source={{ uri: selectedCompanyDocuments[0]?.uri }}
+                                                style={styles.add_img_sty}
+                                            />
+                                            :
+                                            <Image source={require('../../assets/images/addimg_logo.png')} style={styles.add_img} />
+                                    }
+
                                 </View>
-                                <View style={{ ...styles.upload_view, width: moderateScale(100), borderColor: colors.buttonColor }}>
-                                    <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload </Text>
+
+                                <Pressable
+                                    onPress={() => setModalCompanyImg(true)}
+                                    style={{ ...styles.upload_view, width: moderateScale(100), borderColor: colors.buttonColor }}>
+                                    <Text style={{ ...styles.upload_txt, color: colors.buttonColor }}>Upload</Text>
                                     <Icon name='upload-to-cloud' type='Entypo' color={colors.buttonColor} />
-                                </View>
+                                </Pressable>
+
                             </View>
                             <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>GST Number</Text>
                             <AppTextInput
@@ -401,8 +515,8 @@ const SignupDetails = () => {
                             quality: 0.5
                         })}
                     >
-                        <Text style={styles.modalbuttonText}>
-                            <Icon name="camera" size={18} type='Entypo' />
+                        <Text style={{ ...styles.modalbuttonText, color: colors.buttonColor }}>
+                            <Icon name="camera" size={18} type='Entypo' color={colors.buttonColor} />
                             {" "}Camera
                         </Text>
                     </TouchableOpacity>
@@ -418,14 +532,62 @@ const SignupDetails = () => {
                             quality: 0.5
                         })}
                     >
-                        <Text style={styles.modalbuttonText}>
-                            <Icon name="image" size={18} type='Entypo' />
+                        <Text style={{ ...styles.modalbuttonText, color: colors.buttonColor }}>
+                            <Icon name="image" size={18} type='Entypo' color={colors.buttonColor} />
                             {" "}Library
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.modalCancel}
                         onPress={() => setModalImg(false)}>
+                        <Text style={styles.modalCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+
+            <Modal isVisible={isModalCompanyimg}
+                onBackButtonPress={() => setModalCompanyImg(false)}
+                onBackdropPress={() => setModalCompanyImg(false)}
+                transparent={true}>
+                <View style={styles.modalContainer}>
+                    <Text style={styles.modalTitle}>Upload Photo!</Text>
+                    <TouchableOpacity
+                        style={styles.modalbutton}
+                        onPress={() => openCameraModal('capture', {
+                            saveToPhotos: true,
+                            mediaType: 'photo',
+                            includeBase64: false,
+                            maxWidth: 500,
+                            maxHeight: 500,
+                            quality: 0.5
+                        })}
+                    >
+                        <Text style={{ ...styles.modalbuttonText, color: colors.buttonColor }}>
+                            <Icon name="camera" size={18} type='Entypo' color={colors.buttonColor} />
+                            {" "}Camera
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.modalbutton}
+                        onPress={() => openCameraModal('library', {
+                            selectionLimit: 1,
+                            mediaType: 'photo',
+                            includeBase64: false,
+                            maxWidth: 500,
+                            maxHeight: 500,
+                            quality: 0.5
+                        })}
+                    >
+                        <Text style={{ ...styles.modalbuttonText, color: colors.buttonColor }}>
+                            <Icon name="image" size={18} type='Entypo' color={colors.buttonColor} />
+                            {" "}Library
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.modalCancel}
+                        onPress={() => setModalCompanyImg(false)}>
                         <Text style={styles.modalCancelText}>Cancel</Text>
                     </TouchableOpacity>
                 </View>
@@ -511,6 +673,12 @@ const styles = StyleSheet.create({
         height: moderateScale(50),
         width: moderateScale(50)
     },
+    add_img_sty: {
+        height: moderateScale(120),
+        width: moderateScale(120),
+        borderRadius: moderateScale(10),
+        resizeMode: 'cover'
+    },
     upload_view: {
         width: moderateScale(140),
         borderWidth: 1,
@@ -569,8 +737,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         marginBottom: moderateScale(15),
         fontSize: moderateScale(18),
-        // color: Colors.black,
-        // fontFamily: 'sans-serif',
+        fontFamily: FONTS.Jost.semibold,
     },
     modalbutton: {
         marginBottom: moderateScale(10),
@@ -578,9 +745,13 @@ const styles = StyleSheet.create({
     modalbuttonText: {
         fontSize: moderateScale(18),
         padding: moderateScale(10),
-        // color: Colors.black,
-        // fontFamily: FONTS.Inter.medium,
+        fontFamily: FONTS.Jost.medium,
     },
+    modalCancelText: {
+        fontSize: moderateScale(13),
+        fontFamily: FONTS.Jost.regular,
+        color: '#000'
+    }
 });
 
 //make this component available to the app

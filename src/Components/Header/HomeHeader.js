@@ -22,6 +22,10 @@ const HomeHeader = () => {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
+    const [companyLogo, setCompanyLogo] = useState('')
+    console.log('imgggggggggggggggggg',companyLogo);
+    
+
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
     };
@@ -44,16 +48,20 @@ const HomeHeader = () => {
         }
         HomeService.setUserProfile(data)
             .then((res) => {
+                console.log('herderrrrrrrrrrrrrrrrrrrrrrrrr',res);
+                
                 if (res && res.error == false) {
                     setName(res?.data?.name)
                     setEmail(res?.data?.email)
                     setPhoneNumber(res?.data?.phone)
+                    setCompanyLogo(res?.data?.customer_img_url)
                 }
             })
             .catch((err) => {
                 console.log('fatchprofileerrrrrrr', err);
             })
     })
+
     return (
         <View>
             <View style={{ ...styles.container, backgroundColor: colors.cardColor }}>
@@ -63,10 +71,12 @@ const HomeHeader = () => {
                     translucent={true}
                 />
                 <Pressable onPress={toggleModal} style={{ ...styles.img_view, backgroundColor: colors.buttonColor }}>
-                    <Image
-                        source={require('../../assets/images/company.png')}
-                        style={styles.img_sty}
-                    />
+                     {
+                            companyLogo?.length > 0 ?
+                            <Image source={{uri:companyLogo}}  style={styles.img_sty} />
+                            :
+                            <Image source={require('../../assets/images/noLogo.png')}  style={styles.no_img_sty}/>
+                        }
                 </Pressable>
             </View>
 
@@ -85,7 +95,13 @@ const HomeHeader = () => {
                         <Icon name='close' type='AntDesign' color={colors.buttonColor} style={styles.close_icon} />
                     </Pressable>
                     <View style={styles.img_circle}>
-                        <Image source={require('../../assets/images/company.png')} style={styles.user_img} />
+                        {
+                            companyLogo?.length > 0 ?
+                            <Image source={{uri:companyLogo}} style={styles.user_img} />
+                            :
+                            <Image source={require('../../assets/images/noLogo.png')} style={styles.user_img} />
+                        }
+                       
                     </View>
 
                     <View style={styles.m_primary_view}>
@@ -177,12 +193,17 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     user_img: {
-        height: moderateScale(120),
-        width: moderateScale(120),
-        resizeMode: 'contain',
+        height: moderateScale(75),
+        width: moderateScale(75),
+        resizeMode: 'cover',
         borderRadius: moderateScale(60),
         alignSelf: 'center',
     },
+    no_img_sty:{
+        height: moderateScale(35),
+        width: moderateScale(35),
+        tintColor:'#fff'
+    }
 });
 
 //make this component available to the app

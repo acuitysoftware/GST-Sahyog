@@ -1,14 +1,40 @@
 //import liraries
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Icon, StatusBar, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
 import NavigationService from '../../Services/Navigation';
 import { FONTS } from '../../Constants/Fonts';
+import { useSelector } from 'react-redux';
+import HomeService from '../../Services/HomeServises';
 
 // create a component
 const CustomerHeader = ({title=''}) => {
     const colors = useTheme()
+
+    const { userData } = useSelector(state => state.User)
+    const [companyLogo, setCompanyLogo] = useState('')
+
+    useEffect(() => {
+        getUserProfile()
+    }, [])
+
+    const getUserProfile = (() => {
+        let data = {
+            "userid": userData.userid
+        }
+        HomeService.setUserProfile(data)
+            .then((res) => {
+                console.log('herderrrrrrrrrrrrrrrrrrrrrrrrr', res);
+                if (res && res.error == false) {
+                    setCompanyLogo(res?.data?.customer_img_url)
+                }
+            })
+            .catch((err) => {
+                console.log('fatchprofileerrrrrrr', err);
+            })
+    })
+
     return (
         <View>
              <StatusBar
@@ -25,10 +51,12 @@ const CustomerHeader = ({title=''}) => {
             <Text style={{...styles.title_txt,color:colors.secondaryThemeColor}}>{title}</Text>
          
             <View style={{ ...styles.img_view, backgroundColor: colors.buttonColor }}>
-                <Image
-                    source={require('../../assets/images/company.png')}
-                    style={styles.img_sty}
-                />
+            {
+                        companyLogo?.length > 0 ?
+                            <Image source={{ uri: companyLogo }} style={styles.img_sty} />
+                            :
+                            <Image source={require('../../assets/images/noLogo.png')} style={styles.no_img_sty} />
+                    }
             </View>
         </View>
         </View>
@@ -62,6 +90,11 @@ const styles = StyleSheet.create({
     title_txt:{
         fontFamily:FONTS.Jost.medium,
         fontSize:moderateScale(14)
+    },
+    no_img_sty:{
+        height: moderateScale(35),
+        width: moderateScale(35),
+        tintColor:'#fff'
     }
 });
 
