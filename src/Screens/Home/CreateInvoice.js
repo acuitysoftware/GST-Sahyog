@@ -42,19 +42,30 @@ const CreateInvoice = () => {
     const [additionalCharge, setAdditionalCharge] = useState(null);
     const [note, setNote] = useState('');
     const [btnLoader, setBtnLoader] = useState(false);
-    console.log('userdataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', userData);
 
 
-    console.log('selectedProductsselectedProductsselectedProducts=============', selectedProducts);
-    console.log('customerrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr', customer);
-    console.log('customrdddddddddddddddddddddddddddddddddddd', userProfile);
+
+    const handleAddCustomer = () => {
+        if (!invoiceNo.trim()) {
+            Alert.alert('Alert', 'Please enter the Invoice first.');
+        } else {
+            // Code to add customer goes here
+            NavigationService.navigate('BottomTab', { screen: 'Customer' })
+        }
+    };
+
+    const handleAddProduct = () => {
+        if (!customer || Object.keys(customer).length === 0) {
+            Alert.alert('Alert', 'Please add a customer first.');
+        } else {
+            NavigationService.navigate('SelectProduct');
+        }
+    };
 
 
     useEffect(() => {
         getUserProfile()
     }, []);
-
-
 
     const handleChangeText = (text) => {
         dispatch(setInvoiceNo(text.toUpperCase()));
@@ -71,9 +82,7 @@ const CreateInvoice = () => {
             setShippingAddress(route.params.updatedAddress);
         }
     }, [route.params]);
-    console.log('shippingAddress', shippingAddress);
-
-
+   
 
 
     useFocusEffect(
@@ -94,11 +103,6 @@ const CreateInvoice = () => {
             }
         }, [product_Data])
     );
-
-
-    
-   
-
 
     const getUserProfile = (() => {
         let data = {
@@ -175,10 +179,6 @@ const CreateInvoice = () => {
 
         setTotalSCAmount(total); // Update total amount state
     }, [serviceCharge, gst]);
-    console.log('gggggggggggggggggggggggggggggggggg', totalSCAmount);
-
-
-
 
     useEffect(() => {
         // Calculate total from selected products
@@ -191,7 +191,29 @@ const CreateInvoice = () => {
         setTotalAmount(total + totalCharges);
     }, [selectedProducts, shippingCharge, totalSCAmount, additionalCharge, gst]);
 
-    // console.log('invoiceeeeeeeeeeeeeeeeeeeeeeeeeeeeee', invoiceNo);
+
+
+    const isFormComplete = () => {
+        return (
+          totalAmount > 0 && // Ensure totalAmount is a valid number greater than 0
+          shippingAddress && Object.keys(shippingAddress).length > 0 && // Ensure shippingAddress has data
+          shippingCharge !== null && shippingCharge > 0 && // Ensure shippingCharge is valid
+          serviceCharge !== null && serviceCharge > 0 && // Ensure serviceCharge is valid
+          additionalCharge !== null && additionalCharge > 0 // Ensure additionalCharge is valid
+        );
+      };
+      
+
+    console.log('shippingAddressshippingAddress',shippingAddress);
+    console.log('shippingChargeshippingCharge',shippingCharge);
+    console.log('serviceChargeserviceCharge',serviceCharge);
+    console.log('additionalChargeadditionalCharge',additionalCharge);
+    console.log('totalSCAmounttotalSCAmount',totalSCAmount);
+    
+    
+    
+    
+    
 
     const handleInvoiceSubmit = (() => {
         let data = {
@@ -207,7 +229,6 @@ const CreateInvoice = () => {
             "total": totalAmount
         }
         console.log('createinvioicedataaaaaaaaaaaaaaaaaaaaaaaaa', JSON.stringify(data, null, 2));
-
         dispatch(resetInvoiceNo());
         setBtnLoader(true)
         HomeService.createInvoice(data)
@@ -247,11 +268,11 @@ const CreateInvoice = () => {
 
                     />
                 </View>
-
                 <View>
                     {Object.keys(customer).length === 0 ? (
                         <TouchableOpacity
-                            onPress={() => NavigationService.navigate('BottomTab', { screen: 'Customer' })}
+                            onPress={() => handleAddCustomer()}
+                            // onPress={() => NavigationService.navigate('BottomTab', { screen: 'Customer' })}
                             style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
                             <Image source={require('../../assets/images/customer.png')}
                                 style={{ ...styles.addcustomer_img, tintColor: colors.buttonColor }} />
@@ -261,11 +282,13 @@ const CreateInvoice = () => {
                         null
                     }
                 </View>
-                {/* ========================after add customer ====================== */}
+
                 {
                     Object.keys(customer).length === 0 ? null :
                         (
-                            <TouchableOpacity onPress={() => NavigationService.navigate('EditCustomerFrom', { customerId: customer.id })}
+                            <TouchableOpacity
+
+                                onPress={() => NavigationService.navigate('EditCustomerFrom', { customerId: customer.id })}
                                 style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
                                 <View>
                                     <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{customer.name}</Text>
@@ -275,12 +298,13 @@ const CreateInvoice = () => {
                             </TouchableOpacity>
                         )
                 }
-                {/* ===========================END================================= */}
+
 
                 <View>
                     {Object.keys(selectedProducts).length === 0 ? (
                         <TouchableOpacity
-                            onPress={() => NavigationService.navigate('SelectProduct')}
+                            onPress={() => handleAddProduct()}
+                            // onPress={() => NavigationService.navigate('SelectProduct')}
                             style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
                             <Image
                                 source={require('../../assets/images/box.png')}
@@ -294,14 +318,14 @@ const CreateInvoice = () => {
                         null
                     }
                 </View>
-                {/* ==========================after add product=========================== */}
+
 
                 {selectedProducts.map(product => (
                     <View key={product.id} style={{ ...styles.addpeoduct_view, backgroundColor: colors.secondaryThemeColor }}>
                         <View style={{ ...styles.addpeoductprimary_view }}>
                             <View>
                                 <Text style={{ ...styles.webskill_txt, color: colors.secondaryFontColor }}>{product.name}</Text>
-                                <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), fontFamily: 'OpenSans-SemiBold', color: colors.buttonColor }}>₹{product.product_price}</Text>
+                                <Text style={{ ...styles.webskill_number, marginTop: moderateScale(7), fontFamily: FONTS.OpenSans.medium, color: colors.buttonColor }}>₹{product.product_price}</Text>
                             </View>
                             <View style={{ alignItems: 'center' }}>
                                 <View style={styles.number_up_down_view}>
@@ -322,8 +346,6 @@ const CreateInvoice = () => {
                         <View style={styles.addproductBottom_view}>
                             {
                                 customer.state === userProfile.state ? (
-                                    // Display CGST and SGST if both customer and user are from the same state
-
                                     <>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
                                             IGST: <Text style={styles.cgst_number}>₹{product.cgst}</Text>
@@ -333,7 +355,6 @@ const CreateInvoice = () => {
                                         </Text>
                                     </>
                                 ) : (
-                                    // Display IGST and CESS if customer and user are from different states
                                     <>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
                                             CGST: <Text style={styles.cgst_number}>₹{product.cgst}</Text>
@@ -352,9 +373,7 @@ const CreateInvoice = () => {
                         </View>
                     </View>
                 ))}
-                {/* ==========================END=========================== */}
 
-                {/* =============================Add More Product================================= */}
                 {selectedProducts.length > 0 && (
                     <TouchableOpacity
                         onPress={() => NavigationService.navigate('SelectProduct')}
@@ -368,9 +387,7 @@ const CreateInvoice = () => {
                         </Text>
                     </TouchableOpacity>
                 )}
-                {/* =========================================================END=========================== */}
 
-                {/* =============================Add More Shipping address ================================= */}
                 {
                     shippingAddress === null ? (
                         <TouchableOpacity
@@ -396,7 +413,7 @@ const CreateInvoice = () => {
                         </TouchableOpacity>
                     )
                 }
-                {/* =========================================================END=========================== */}
+
                 {
                     (shippingCharge === null) ? (
                         <TouchableOpacity
@@ -425,9 +442,6 @@ const CreateInvoice = () => {
                     )
                 }
 
-                {/* =========================================================END=========================== */}
-
-                {/* =============================Add  Service charge ================================= */}
                 {
                     (serviceCharge === null) ? (
                         <TouchableOpacity onPress={handleServiceCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
@@ -449,10 +463,7 @@ const CreateInvoice = () => {
                         )
                     )
                 }
-                {/* =========================================================END=========================== */}
 
-
-                {/* =============================Add Additional charge ================================= */}
                 {
                     (additionalCharge === null) ? (
                         <TouchableOpacity onPress={handleAddtionalCharge} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor, }}>
@@ -473,9 +484,7 @@ const CreateInvoice = () => {
                         )
                     )
                 }
-                {/* =========================================================END=========================== */}
 
-                {/* =============================Add notes ================================= */}
                 {
                     (note === '') ? (
                         <TouchableOpacity onPress={handleAddNote} style={{ ...styles.addcustomer, backgroundColor: colors.secondaryThemeColor }}>
@@ -497,14 +506,11 @@ const CreateInvoice = () => {
                     )
                 }
 
-                {/* =========================================================END=========================== */}
-
-
-
             </ScrollView>
+
             <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
                 <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>Total  <Text>₹{typeof totalAmount === 'number' ? totalAmount.toFixed(2) : '0.00'}</Text></Text>
-                <Pressable
+                {/* <Pressable
                     onPress={() => handleInvoiceSubmit()}
                     style={{
                         ...styles.genarate_btn,
@@ -520,7 +526,30 @@ const CreateInvoice = () => {
                             }}>Generate</Text>
                     }
 
+                </Pressable> */}
+
+                <Pressable
+                    onPress={() => handleInvoiceSubmit()}
+                    style={{
+                        ...styles.genarate_btn,
+                        backgroundColor: isFormComplete() ? colors.buttonColor : 'gray', // Change color based on form completion
+                    }}
+                    disabled={!isFormComplete()} // Disable if form is incomplete
+                >
+                    {
+                        btnLoader ?
+                            <ActivityIndicator size={'small'} color={'#fff'} />
+                            :
+                            <Text style={{
+                                ...styles.genarate_btn_txt,
+                                color: isFormComplete() ? colors.secondaryThemeColor : '#ccc' // Text color for disabled state
+                            }}>
+                                Generate
+                            </Text>
+                    }
                 </Pressable>
+
+
             </View>
 
             <Modal

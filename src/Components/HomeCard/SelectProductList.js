@@ -23,7 +23,7 @@ const SelectProductList = ({ item, index,delProduct }) => {
                     }}>₹{item.mrp}</Text>
                     <Text style={{ ...styles.webskill_number, color: colors.buttonColor }}>₹{item.product_price}</Text>
                     {item.product_price ? (
-                        <Text style={{ ...styles.webskill_number, color: colors.secondaryFontColor }}>{item.hsn_code}</Text>
+                        <Text style={{ ...styles.webskill_number, color: colors.secondaryFontColor }}>#{item.hsn_code}</Text>
                     ) : (
                         <Text style={{ ...styles.webskill_number, color: colors.secondaryFontColor }}>---</Text>
                     )

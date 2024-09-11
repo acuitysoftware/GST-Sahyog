@@ -47,7 +47,7 @@ const OldLogin = () => {
         AuthService.setLogin(data)
             .then((res) => {
                 if (res && res.error == false) {
-                    Toast.show(res.message);
+                    // Toast.show(res.message);
                     AuthService.setAccount(res.data);
                     AuthService.setToken(res?.data?.token);
                     dispatch(setUser(res.data))

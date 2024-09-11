@@ -72,9 +72,9 @@ async function FetchFullInvoiceData(data) {
 async function setGstDatafatch(data) {
     return await HttpClient.post('/dashboard/all_data_count.php', data);
 }
-
-
-
+async function sethnsCode(data) {
+    return await HttpClient.post('/dashboard/add_fsn_code.php', data);
+}
 
 
 const HomeService = {
@@ -99,7 +99,8 @@ const HomeService = {
     createInvoice,
     FetchInvoiceList,
     FetchFullInvoiceData,
-    setGstDatafatch
+    setGstDatafatch,
+    sethnsCode
 }
 
 export default HomeService;

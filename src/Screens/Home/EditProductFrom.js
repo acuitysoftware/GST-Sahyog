@@ -43,6 +43,14 @@ const EditProductFrom = () => {
     };
 
     useEffect(() => {
+        const taxValueAsNumber = parseFloat(productTValue) || 0;  
+        const calculatedPrice = productMrp - productDPrice;
+        const subProductPrice = calculatedPrice + taxValueAsNumber
+        console.log('Calculated Price:', subProductPrice);
+        setProductPrice(subProductPrice.toString());  
+    }, [productMrp, productDPrice, productTValue]);
+
+    useEffect(() => {
         getHSNProduct();
     }, []);
 
@@ -195,7 +203,16 @@ const EditProductFrom = () => {
                                 />
                                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>HSN Code </Text>
 
-                                <View style={styles.hsn_view}>
+                                <AppTextInput
+                                    inputContainerStyle={{ ...styles.inputcontainer_sty }}
+                                    inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
+                                    keyboardType="phone-pad"
+                                    placeholder="9%"
+                                    value={HsnCode}
+                                    onChangeText={(val) => setHsnCode(val)}
+                                />
+
+                                {/* <View style={styles.hsn_view}>
                                     <AppTextInput
                                         inputContainerStyle={{ ...styles.HNSinputcontainer_sty }}
                                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
@@ -207,7 +224,7 @@ const EditProductFrom = () => {
                                     <Pressable onPress={toggleModal} style={{ ...styles.hns_seacrch_view, backgroundColor: colors.buttonColor }}>
                                         <Icon name="search" type="Fontisto" color={colors.secondaryThemeColor} />
                                     </Pressable>
-                                </View>
+                                </View> */}
                                 <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>CGST </Text>
                                 <AppTextInput
                                     inputContainerStyle={{ ...styles.inputcontainer_sty }}
@@ -242,6 +259,7 @@ const EditProductFrom = () => {
                                     keyboardType='phone-pad'
                                     value={productPrice}
                                     onChangeText={(val) => setProductPrice(val)}
+                                    editable={false}
                                 />
 
                                 <AppButton
@@ -258,7 +276,7 @@ const EditProductFrom = () => {
                     )}
 
 
-            <Modal
+            {/* <Modal
                 isVisible={isModalVisible}
                 onBackButtonPress={() => setModalVisible(false)}
                 onBackdropPress={() => setModalVisible(false)}
@@ -282,7 +300,8 @@ const EditProductFrom = () => {
                         ))}
                     </ScrollView>
                 </View>
-            </Modal>
+            </Modal> */}
+
         </View>
     );
 };

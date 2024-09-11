@@ -96,7 +96,7 @@ const SelectProduct = () => {
                     <Image source={require('../../assets/images/empty.png')} style={styles.nodata_sty} />
                 </View>
             ) : (
-                <View style={{ marginBottom: moderateScale(90) }}>
+                <View style={{ marginBottom: moderateScale(160) }}>
                     <FlatList
                         showsVerticalScrollIndicator={false}
                         data={allProduct}

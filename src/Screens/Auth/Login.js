@@ -43,9 +43,8 @@ const Login = () => {
         AuthService.setLogin(data)
             .then((res) => {
                 console.log('hhhhhhhhhhhhhhhhhhh=====================',res);
-                
                 if (res && res.error == false) {
-                    Toast.show(res.message);
+                    // Toast.show(res.message);
                     AuthService.setToken(res?.data?.token);
                     AuthService.setAccount(res?.data);
                     dispatch(setUser(res?.data))
