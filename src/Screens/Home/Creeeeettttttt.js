@@ -33,8 +33,8 @@ const CreateInvoice = () => {
     const [customer, setCustomer] = useState({});
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
-    const [totalPrice, setTotalPrice] = useState(0);
     const [totalSCAmount, setTotalSCAmount] = useState(0);
+    const [totalCharge, settotalCharge] = useState(0);
 
     const [shippingAddress, setShippingAddress] = useState(null);
     const [shippingCharge, setShippingCharge] = useState(null);
@@ -46,10 +46,8 @@ const CreateInvoice = () => {
     const [btnLoader, setBtnLoader] = useState(false);
 
     console.log('ccccvvvvvvvcustomercustomercustomercustomer', customer);
-    console.log('product_Dataproduct_Dataproduct_Data', product_Data);
-
-
-
+    console.log('product_Dataproduct_Dataproduct_Data',product_Data);
+    
 
 
     const handleAddCustomer = () => {
@@ -105,114 +103,119 @@ const CreateInvoice = () => {
         }
     }, [route.params]);
 
+    const [totalPrice, setTotalPrice] = useState(0);
 
+    
 
+useFocusEffect(
+    useCallback(() => {
+        if (Object.keys(product_Data).length !== 0) {
+            const existingProduct = selectedProducts.find(product => product.id === product_Data.id);
+            if (existingProduct) {
+                const updatedProducts = selectedProducts.map(product =>
+                    product.id === product_Data.id ? { ...product, ...product_Data } : product
+                );
+                setSelectedProducts(updatedProducts);
+            } else {
+                // Add new product and update total amount
+                const newProduct = { ...product_Data, quantity: 1 };
+                setSelectedProducts([...selectedProducts, newProduct]);
 
+                const newTotal = calculateTotalWithTax(newProduct, 1);
+                console.log('New total calculated:', newTotal);
 
-    useFocusEffect(
-        useCallback(() => {
-            if (Object.keys(product_Data).length !== 0) {
-                const existingProduct = selectedProducts.find(product => product.id === product_Data.id);
-                if (existingProduct) {
-                    const updatedProducts = selectedProducts.map(product =>
-                        product.id === product_Data.id ? { ...product, ...product_Data } : product
-                    );
-                    setSelectedProducts(updatedProducts);
-                } else {
-                    // Add new product and update total amount
-                    const newProduct = { ...product_Data, quantity: 1 };
-                    const newTotal = calculateTotalWithTax(newProduct, 1);
+                // Calculate the updated total price
+                setTotalPrice(prevTotal => {
+                    const updatedTotal = prevTotal + newTotal;
+                    const roundedTotal = parseFloat(updatedTotal.toFixed(2));  // Round to 2 decimal places
+                    console.log('Updated total amount (rounded):', roundedTotal);
 
-                    setSelectedProducts([...selectedProducts, newProduct]);
-
-                    setTotalPrice(prevTotal => {
-                        const updatedTotal = prevTotal + newTotal;
-                        return parseFloat(updatedTotal.toFixed(2)); // Round to 2 decimal places
-                    });
-                }
+                    // setTotalAmount(roundedTotal);  // Use the rounded value directly
+                    return roundedTotal;  // Return updated total for state
+                });
             }
-        }, [product_Data])
-    );
-
-
-    console.log('Total amount has been updated:', totalAmount);
-    console.log('Total price has been updated:', totalPrice);
-
-    const calculateTotalWithTax = (product, quantity) => {
-        let total = parseFloat(product.product_price) * quantity;
-
-        console.log(`Product price: ${product.product_price}, Quantity: ${quantity}`);
-        console.log('Total before tax:', total);
-
-        if (customer.state !== userProfile.state) {
-            // CGST, SGST, and CESS calculation
-            const cgst = (total * parseFloat(product.cgst)) / 100;
-            const sgst = (total * parseFloat(product.sgst)) / 100;
-            const cess = (total * parseFloat(product.sgst)) / 100;
-            total += cgst + sgst + cess;
-            console.log(`Applied CGST: ${cgst}, SGST: ${sgst}, CESS: ${cess}`);
-        } else {
-            // IGST and CESS calculation
-            const igst = (total * parseFloat(product.igst)) / 100;
-            const cess = (total * parseFloat(product.sgst)) / 100;
-            total += igst + cess;
-            console.log(`Applied IGST: ${igst}, CESS: ${cess}`);
         }
+    }, [product_Data])
+);
 
-        console.log('Total after tax:', total); // Log the final total after tax
-        return total;
-    };
+console.log('Total amount has been updated:', totalAmount);
+console.log('Total price has been updated:', totalPrice);
 
-    // Increment handler
-    const handleIncrement = (id) => {
-        const updatedProducts = selectedProducts.map(product => {
-            if (product.id === id) {
-                const updatedQuantity = product.quantity + 1;
-                const prevTotal = calculateTotalWithTax(product, product.quantity);
+const calculateTotalWithTax = (product, quantity) => {
+    let total = parseFloat(product.product_price) * quantity;
+
+    console.log(`Product price: ${product.product_price}, Quantity: ${quantity}`);
+    console.log('Total before tax:', total);
+
+    if (customer.state !== userProfile.state) {
+        // CGST, SGST, and CESS calculation
+        const cgst = (total * parseFloat(product.cgst)) / 100;
+        const sgst = (total * parseFloat(product.sgst)) / 100;
+        const cess = (total * parseFloat(product.sgst)) / 100;
+        total += cgst + sgst + cess;
+        console.log(`Applied CGST: ${cgst}, SGST: ${sgst}, CESS: ${cess}`);
+    } else {
+        // IGST and CESS calculation
+        const igst = (total * parseFloat(product.igst)) / 100;
+        const cess = (total * parseFloat(product.sgst)) / 100;
+        total += igst + cess;
+        console.log(`Applied IGST: ${igst}, CESS: ${cess}`);
+    }
+
+    console.log('Total after tax:', total); // Log the final total after tax
+    return total;
+};
+
+// Increment handler
+const handleIncrement = (id) => {
+    const updatedProducts = selectedProducts.map(product => {
+        if (product.id === id) {
+            const updatedQuantity = product.quantity + 1;
+            const prevTotal = calculateTotalWithTax(product, product.quantity);
+            const newTotal = calculateTotalWithTax(product, updatedQuantity);
+
+            console.log(`Previous total for product ${id}: ${prevTotal}`);
+            console.log(`New total for product ${id}: ${newTotal}`);
+
+            setTotalPrice(prevAmount => prevAmount - prevTotal + newTotal); // Adjust total amount
+            return { ...product, quantity: updatedQuantity };
+        }
+        return product;
+    });
+    setSelectedProducts(updatedProducts);
+};
+
+// Decrement handler
+const handleDecrement = (id) => {
+    const updatedProducts = selectedProducts.map(product => {
+        if (product.id === id) {
+            const updatedQuantity = product.quantity - 1;
+            const prevTotal = calculateTotalWithTax(product, product.quantity);
+
+            if (updatedQuantity === 0) {
+                setTotalPrice(prevAmount => prevAmount - prevTotal); // Deduct previous total
+                console.log(`Removing product ${id}, previous total deducted: ${prevTotal}`);
+                return null;
+            } else {
                 const newTotal = calculateTotalWithTax(product, updatedQuantity);
-
                 console.log(`Previous total for product ${id}: ${prevTotal}`);
                 console.log(`New total for product ${id}: ${newTotal}`);
 
                 setTotalPrice(prevAmount => prevAmount - prevTotal + newTotal); // Adjust total amount
                 return { ...product, quantity: updatedQuantity };
             }
-            return product;
-        });
-        setSelectedProducts(updatedProducts);
-    };
-
-    // Decrement handler
-    const handleDecrement = (id) => {
-        const updatedProducts = selectedProducts.map(product => {
-            if (product.id === id) {
-                const updatedQuantity = product.quantity - 1;
-                const prevTotal = calculateTotalWithTax(product, product.quantity);
-
-                if (updatedQuantity === 0) {
-                    setTotalPrice(prevAmount => prevAmount - prevTotal); // Deduct previous total
-                    console.log(`Removing product ${id}, previous total deducted: ${prevTotal}`);
-                    return null;
-                } else {
-                    const newTotal = calculateTotalWithTax(product, updatedQuantity);
-                    console.log(`Previous total for product ${id}: ${prevTotal}`);
-                    console.log(`New total for product ${id}: ${newTotal}`);
-
-                    setTotalPrice(prevAmount => prevAmount - prevTotal + newTotal); // Adjust total amount
-                    return { ...product, quantity: updatedQuantity };
-                }
-            }
-            return product;
-        }).filter(product => product !== null); // Filter out the null values (removed products)
-
-        setSelectedProducts(updatedProducts);
-
-        // Reset totalAmount if no products are left
-        if (updatedProducts.length === 0) {
-            setTotalPrice(0); // Reset to 0 if there are no products
-            console.log('All products removed, total amount reset to 0');
         }
-    };
+        return product;
+    }).filter(product => product !== null); // Filter out the null values (removed products)
+
+    setSelectedProducts(updatedProducts);
+
+    // Reset totalAmount if no products are left
+    if (updatedProducts.length === 0) {
+        setTotalPrice(0); // Reset to 0 if there are no products
+        console.log('All products removed, total amount reset to 0');
+    }
+};
 
     // Handlers to toggle modal visibility
     const handleShipingCharge = () => {
@@ -228,31 +231,66 @@ const CreateInvoice = () => {
         setAddNoteModal(!AddNoteModal);
     };
 
-
     useEffect(() => {
-        // Calculate total whenever serviceCharge or gst changes
-        const serviceChargeAmount = serviceCharge !== null ? serviceCharge : 0;
-        const gstPercentage = parseFloat(gst) || 0;
+        // Initialize variables
+        const initialServiceCharge = 0;
+        const initialGst = 0;
+        const initialShippingCharge = 0;
+        const initialAdditionalCharge = 0;
+        
+        // Retrieve and parse values, default to 0 if invalid
+        const serviceChargeAmount = serviceCharge ? parseFloat(serviceCharge) : initialServiceCharge;
+        const gstPercentage = gst ? parseFloat(gst) : initialGst;
+        const shippingChargeAmount = shippingCharge ? parseFloat(shippingCharge) : initialShippingCharge;
+        const additionalChargeAmount = additionalCharge ? parseFloat(additionalCharge) : initialAdditionalCharge;
+    
+        // Calculate GST amount and total service charge amount
         const gstAmount = (serviceChargeAmount * gstPercentage) / 100;
-        const total = serviceChargeAmount + gstAmount;
-
+        const totalSCAmount = serviceChargeAmount + gstAmount;
+    
+        // Calculate total from selected products
+        const productTotal = selectedProducts.reduce((acc, product) =>
+            acc + (parseFloat(product.product_price) * product.quantity), 0
+        );
+    
+        // Calculate total charges including GST on service charge
+        const totalCharges = shippingChargeAmount + totalSCAmount + additionalChargeAmount;
+    
+        // Set total amounts
         setServiceChargeandGst({
             serviceChargeAmount,
             gstPercentage,
             gstAmount,
-            total,
+            total: totalSCAmount,
         });
+    
+        setTotalSCAmount(totalSCAmount); // Update total service charge amount state
+        settotalCharge(productTotal + totalCharges); // Update total amount state
+    
+        // Logging for debugging
+        console.log('Total calculated from products:', productTotal);
+        console.log('Total charges (shipping, service, additional):', totalCharges);
+        console.log('Final total amount:', productTotal + totalCharges);
+    
+    }, [serviceCharge, gst, selectedProducts, shippingCharge, additionalCharge]);
+    
+    
 
-        setTotalSCAmount(total); // Update total amount state
-    }, [serviceCharge, gst]);
+    console.log('seedikhAOGHOUHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH',totalSCAmount);
+    console.log('serviceChargeserviceChargeserviceChargeserviceCharge',serviceCharge);
+    console.log('shippingChargeshippingChargeshippingCharge',shippingCharge);
+    console.log('additionalChargeadditionalChargeadditionalCharge',additionalCharge);
 
-    useEffect(() => {
-        const totalCharges = (parseFloat(shippingCharge) || 0) + (parseFloat(totalSCAmount) || 0) + (parseFloat(additionalCharge) || 0);
-        // Set total amount
-        setTotalAmount(totalCharges);
-    }, [selectedProducts, shippingCharge, totalSCAmount, additionalCharge, gst]);
 
-    const TotalAmountPrice = totalAmount + totalPrice;
+    console.log('totalChargetotalChargetotalCharge',totalCharge);
+    
+    
+    
+    
+    
+    
+    
+
 
     const isFormComplete = () => {
         return (
@@ -276,35 +314,31 @@ const CreateInvoice = () => {
             "service_charge": serviceChargeandGst,
             "additional_charge": additionalCharge,
             "note": note,
-            "total": TotalAmountPrice
+            "total": totalAmount
         }
         console.log('createinvioicedataaaaaaaaaaaaaaaaaaaaaaaaa', JSON.stringify(data, null, 2));
         dispatch(resetInvoiceNo());
         setBtnLoader(true)
         HomeService.createInvoice(data)
             .then((res) => {
-                console.log('createeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', JSON.stringify(res));
+                console.log('createeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', res);
                 if (res && res.error == false) {
                     setBtnLoader(true)
                     Toast.show('Invoice Create successfully')
-                    console.log('pdffffff=====================================================================',res?.data?.id);
-
                     setInvoiceID(res?.data?.id)
-                    if (res) {
-                        console.log('inco0u988887777777777777777777777777777777777777777777777777777',JSON.stringify(res));
+                    if (res?.data) {
                         let data = {
                             "userid": userData?.userid,
                             "invoice_id": res?.data?.id
                         }
-                        console.log('pdfffffffffffffffffffffff==========================================================================',data);
                         HomeService.genaratePDF(data)
-                            .then((res) => {
-                                if (res) {
-                                    console.log('jaehKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKgennnnnnnnnnnnnnnnnKKKKKKKkk', JSON.stringify(res));
-                                    NavigationService.navigate('InvoicePdfScreen', { invoiceIDdata:invoiceId })
-                                }
-                            })
-           
+                        .then((res)=>{
+                            if (res) {
+                                console.log('jaehKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKgennnnnnnnnnnnnnnnnKKKKKKKkk',res);
+                                NavigationService.navigate('InvoicePdfScreen', { invoiceID: invoiceId }) 
+                            }
+                        })
+                        NavigationService.navigate('InvoicePdfScreen', { invoiceID: invoiceId }) 
                     } else {
 
                     }
@@ -582,11 +616,13 @@ const CreateInvoice = () => {
             </ScrollView>
 
             <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
-
                 <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>
-                    Total  <Text>₹ {totalAmount > 0 ? TotalAmountPrice.toFixed(2) : totalPrice.toFixed(2)} </Text>
+                    Total P <Text>₹{typeof totalPrice === 'number' ? totalPrice.toFixed(2) : '0.00'}</Text>
                 </Text>
-
+                <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>
+                    Total C <Text>₹{typeof totalCharge === 'number' ? totalCharge.toFixed(2) : '0.00'}</Text>
+                </Text>
+                
                 <Pressable
                     onPress={() => handleInvoiceSubmit()}
                     style={{

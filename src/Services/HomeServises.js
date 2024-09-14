@@ -76,6 +76,11 @@ async function sethnsCode(data) {
     return await HttpClient.post('/dashboard/add_fsn_code.php', data);
 }
 
+async function genaratePDF(data) {
+    return await HttpClient.post('/invoice/generate_invoice.php', data);
+}
+
+
 
 const HomeService = {
     getAccount,
@@ -100,7 +105,8 @@ const HomeService = {
     FetchInvoiceList,
     FetchFullInvoiceData,
     setGstDatafatch,
-    sethnsCode
+    sethnsCode,
+    genaratePDF
 }
 
 export default HomeService;

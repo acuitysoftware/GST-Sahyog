@@ -1,6 +1,6 @@
 //import liraries
-import React, { Component, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator } from 'react-native';
+import React, { Component, useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { AppButton, Card, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -17,28 +17,19 @@ const InvoicePdfScreen = () => {
     const colors = useTheme()
     const route = useRoute()
     const { userData } = useSelector(state => state.User);
-    const InvoiceID = route.params.invoiceId
+    const Invoice_ID = route.params.invoiceIDdata
     const [loading, setLoading] = useState(true);
     const [userProfile, setUserProfile] = useState([])
     const [invoiceFullData, setInvoiceFullData] = useState({})
     console.log('fulllllllllllllllllllllllllllllllllllllldataaaaaaaaaaaaaaaaaaaaaaaaaa', invoiceFullData);
     const [totalQuantity, setTotalQuantity] = useState(null);
     const [totalProduct, setTotalProduct] = useState([])
-    const [totalServiceCharge, setTotalServiceCharge] = useState({})
-    const [totalProductPrice, setTotalProductPrice] = useState(0);
-    const [cgstValue, setCgstValue] = useState(0);
-    const [sgstValue, setSgstValue] = useState(0);
-    const [gstValue, setGstValue] = useState(0);
-    console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', invoiceFullData?.service_charge?.serviceChargeAmount)
+    
+
+    console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', Invoice_ID)
 
 
-    useEffect(() => {
-        if (invoiceFullData?.service_charge) {
-            const parsedServiceCharge = JSON.parse(invoiceFullData.service_charge);
-            setTotalServiceCharge(parsedServiceCharge)
-            console.log('Service Charge Amount================:', parsedServiceCharge.serviceChargeAmount); 
-        }
-    }, [invoiceFullData]);
+   
 
 
     useEffect(() => {
@@ -73,7 +64,7 @@ const InvoicePdfScreen = () => {
     const getInvoiceData = (() => {
         let data = {
             "userid": userData?.userid,
-            "invoice_id": InvoiceID
+            "invoice_id": Invoice_ID
         }
         setLoading(true)
         HomeService.FetchFullInvoiceData(data)
@@ -96,41 +87,15 @@ const InvoicePdfScreen = () => {
             })
     })
 
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        let totalCgst = 0;
-        let totalSgst = 0;
-        let totalGst = 0;
-        let totalPrice = 0;
-      
-        // Ensure `totalProduct` is defined and is an array
-        if (totalProduct && Array.isArray(totalProduct)) {
-          totalProduct.forEach(product => {
-            const cgst = parseFloat(product.cgst) || 0;
-            const sgst = parseFloat(product.sgst) || 0;
-            const productPrice = parseFloat(product.product_price) || 0;
-            const quantity = parseInt(product.quantity, 10) || 0;
-      
-            const price = productPrice * quantity;
-            const cgstValue = price * (cgst / 100);
-            const sgstValue = price * (sgst / 100);
-      
-            totalCgst += cgstValue;
-            totalSgst += sgstValue;
-            totalGst += cgstValue + sgstValue; // GST is CGST + SGST
-            totalPrice += price;
-          });
-      
-          // Set state values
-          setCgstValue(totalCgst);
-          setSgstValue(totalSgst);
-          setGstValue(totalGst);
-          setTotalProductPrice(totalPrice);
-        } else {
-          console.log('totalProduct is not defined or not an array');
-        }
-      }, [totalProduct]);
-
+    const onRefresh = useCallback(() => {
+      setRefreshing(true);
+      // Simulate an API call or data fetching
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 500);
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -141,7 +106,14 @@ const InvoicePdfScreen = () => {
                 </View>
             ) :
                 (
-                    <ScrollView showsVerticalScrollIndicator={false}>
+                    <ScrollView 
+                    refreshControl={
+                        <RefreshControl
+                          refreshing={refreshing}
+                          onRefresh={onRefresh}
+                        />
+                      }
+                    showsVerticalScrollIndicator={false}>
                         <Card style={{ ...styles.card_sty, backgroundColor: colors.cardColor }}>
                             <View>
                                 <View style={styles.shop_view}>
@@ -302,15 +274,15 @@ const InvoicePdfScreen = () => {
                             <View style={{ ...styles.line, marginTop:0,borderColor: colors.secondaryFontColor }} />
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(10) }}>
                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Sub Total </Text>
-                                <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>₹{totalProductPrice.toFixed(2)}</Text>
+                                <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>₹90Ch</Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>CGST (9%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ { cgstValue.toFixed(2) }</Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90ch</Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>SGST (9%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ { sgstValue.toFixed(2) }</Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90cx</Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Delivery Charge  </Text>
@@ -318,11 +290,11 @@ const InvoicePdfScreen = () => {
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Service Charge </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{totalServiceCharge?.serviceChargeAmount}</Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹6000ch</Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>GST (18%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ { gstValue.toFixed(2) }</Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90cg </Text>
                             </View>
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(15) }}>
                                 <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Additional Charge  </Text>

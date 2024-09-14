@@ -130,6 +130,7 @@ const ShippingAddressFrom = ({ route, navigation }) => {
                         inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                         keyboardType='phone-pad'
                         value={formData.pincode}
+                        maxLength={6}
                         onChangeText={(value) => handleInputChange('pincode', value)}
                     />
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>City</Text>

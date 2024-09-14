@@ -16,7 +16,7 @@ import Toast from "react-native-simple-toast";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
-const CreateInvoice = () => {
+const Creeeeeeeeeeeeeeeee = () => {
     const colors = useTheme()
     const route = useRoute();
     const dispatch = useDispatch();
@@ -24,7 +24,6 @@ const CreateInvoice = () => {
     const invoiceNo = useSelector(state => state.Invoice.invoiceNo);
     const customer_Data = route.params?.customerData || {};
     const product_Data = route.params?.productData || {};
-    const [invoiceId, setInvoiceID] = useState('');
     const [userProfile, setUserProfile] = useState({});
     const [ShippingChargeModal, setShippingChargeModal] = useState(false);
     const [ServiceChargeModal, setServiceChargeModal] = useState(false);
@@ -33,7 +32,6 @@ const CreateInvoice = () => {
     const [customer, setCustomer] = useState({});
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
-    const [totalPrice, setTotalPrice] = useState(0);
     const [totalSCAmount, setTotalSCAmount] = useState(0);
 
     const [shippingAddress, setShippingAddress] = useState(null);
@@ -44,11 +42,6 @@ const CreateInvoice = () => {
     const [additionalCharge, setAdditionalCharge] = useState(null);
     const [note, setNote] = useState('');
     const [btnLoader, setBtnLoader] = useState(false);
-
-    console.log('ccccvvvvvvvcustomercustomercustomercustomer', customer);
-    console.log('product_Dataproduct_Dataproduct_Data', product_Data);
-
-
 
 
 
@@ -74,21 +67,6 @@ const CreateInvoice = () => {
         getUserProfile()
     }, []);
 
-    const getUserProfile = (() => {
-        let data = {
-            "userid": userData.userid
-        }
-        HomeService.setUserProfile(data)
-            .then((res) => {
-                if (res && res.error == false) {
-                    setUserProfile(res?.data)
-                }
-            })
-            .catch((err) => {
-                console.log('fatchprofileerrrrrrr', err);
-            })
-    })
-
     const handleChangeText = (text) => {
         dispatch(setInvoiceNo(text.toUpperCase()));
     };
@@ -104,9 +82,7 @@ const CreateInvoice = () => {
             setShippingAddress(route.params.updatedAddress);
         }
     }, [route.params]);
-
-
-
+   
 
 
     useFocusEffect(
@@ -119,62 +95,36 @@ const CreateInvoice = () => {
                     );
                     setSelectedProducts(updatedProducts);
                 } else {
-                    // Add new product and update total amount
+                    // Add new product
                     const newProduct = { ...product_Data, quantity: 1 };
-                    const newTotal = calculateTotalWithTax(newProduct, 1);
-
                     setSelectedProducts([...selectedProducts, newProduct]);
-
-                    setTotalPrice(prevTotal => {
-                        const updatedTotal = prevTotal + newTotal;
-                        return parseFloat(updatedTotal.toFixed(2)); // Round to 2 decimal places
-                    });
+                    setTotalAmount(prevTotal => prevTotal + parseFloat(product_Data.product_price));
                 }
             }
         }, [product_Data])
     );
 
-
-    console.log('Total amount has been updated:', totalAmount);
-    console.log('Total price has been updated:', totalPrice);
-
-    const calculateTotalWithTax = (product, quantity) => {
-        let total = parseFloat(product.product_price) * quantity;
-
-        console.log(`Product price: ${product.product_price}, Quantity: ${quantity}`);
-        console.log('Total before tax:', total);
-
-        if (customer.state !== userProfile.state) {
-            // CGST, SGST, and CESS calculation
-            const cgst = (total * parseFloat(product.cgst)) / 100;
-            const sgst = (total * parseFloat(product.sgst)) / 100;
-            const cess = (total * parseFloat(product.sgst)) / 100;
-            total += cgst + sgst + cess;
-            console.log(`Applied CGST: ${cgst}, SGST: ${sgst}, CESS: ${cess}`);
-        } else {
-            // IGST and CESS calculation
-            const igst = (total * parseFloat(product.igst)) / 100;
-            const cess = (total * parseFloat(product.sgst)) / 100;
-            total += igst + cess;
-            console.log(`Applied IGST: ${igst}, CESS: ${cess}`);
+    const getUserProfile = (() => {
+        let data = {
+            "userid": userData.userid
         }
+        HomeService.setUserProfile(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    setUserProfile(res?.data)
+                }
+            })
+            .catch((err) => {
+                console.log('fatchprofileerrrrrrr', err);
+            })
+    })
 
-        console.log('Total after tax:', total); // Log the final total after tax
-        return total;
-    };
 
-    // Increment handler
     const handleIncrement = (id) => {
         const updatedProducts = selectedProducts.map(product => {
             if (product.id === id) {
                 const updatedQuantity = product.quantity + 1;
-                const prevTotal = calculateTotalWithTax(product, product.quantity);
-                const newTotal = calculateTotalWithTax(product, updatedQuantity);
-
-                console.log(`Previous total for product ${id}: ${prevTotal}`);
-                console.log(`New total for product ${id}: ${newTotal}`);
-
-                setTotalPrice(prevAmount => prevAmount - prevTotal + newTotal); // Adjust total amount
+                setTotalAmount(prevTotal => prevTotal + parseFloat(product.product_price));
                 return { ...product, quantity: updatedQuantity };
             }
             return product;
@@ -182,36 +132,21 @@ const CreateInvoice = () => {
         setSelectedProducts(updatedProducts);
     };
 
-    // Decrement handler
     const handleDecrement = (id) => {
         const updatedProducts = selectedProducts.map(product => {
             if (product.id === id) {
                 const updatedQuantity = product.quantity - 1;
-                const prevTotal = calculateTotalWithTax(product, product.quantity);
-
                 if (updatedQuantity === 0) {
-                    setTotalPrice(prevAmount => prevAmount - prevTotal); // Deduct previous total
-                    console.log(`Removing product ${id}, previous total deducted: ${prevTotal}`);
+                    setTotalAmount(prevTotal => prevTotal - parseFloat(product.product_price) * product.quantity);
                     return null;
                 } else {
-                    const newTotal = calculateTotalWithTax(product, updatedQuantity);
-                    console.log(`Previous total for product ${id}: ${prevTotal}`);
-                    console.log(`New total for product ${id}: ${newTotal}`);
-
-                    setTotalPrice(prevAmount => prevAmount - prevTotal + newTotal); // Adjust total amount
+                    setTotalAmount(prevTotal => prevTotal - parseFloat(product.product_price));
                     return { ...product, quantity: updatedQuantity };
                 }
             }
             return product;
-        }).filter(product => product !== null); // Filter out the null values (removed products)
-
+        }).filter(product => product !== null);
         setSelectedProducts(updatedProducts);
-
-        // Reset totalAmount if no products are left
-        if (updatedProducts.length === 0) {
-            setTotalPrice(0); // Reset to 0 if there are no products
-            console.log('All products removed, total amount reset to 0');
-        }
     };
 
     // Handlers to toggle modal visibility
@@ -227,7 +162,6 @@ const CreateInvoice = () => {
     const handleAddNote = () => {
         setAddNoteModal(!AddNoteModal);
     };
-
 
     useEffect(() => {
         // Calculate total whenever serviceCharge or gst changes
@@ -247,23 +181,28 @@ const CreateInvoice = () => {
     }, [serviceCharge, gst]);
 
     useEffect(() => {
+        // Calculate total from selected products
+        const total = selectedProducts.reduce((acc, product) =>
+            acc + (parseFloat(product.product_price) * product.quantity), 0
+        );
+        // Calculate total charges including GST on service charge
         const totalCharges = (parseFloat(shippingCharge) || 0) + (parseFloat(totalSCAmount) || 0) + (parseFloat(additionalCharge) || 0);
         // Set total amount
-        setTotalAmount(totalCharges);
+        setTotalAmount(total + totalCharges);
     }, [selectedProducts, shippingCharge, totalSCAmount, additionalCharge, gst]);
 
-    const TotalAmountPrice = totalAmount + totalPrice;
+
 
     const isFormComplete = () => {
         return (
-            totalAmount > 0 && // Ensure totalAmount is a valid number greater than 0
-            shippingAddress && Object.keys(shippingAddress).length > 0 && // Ensure shippingAddress has data
-            shippingCharge !== null && shippingCharge > 0 && // Ensure shippingCharge is valid
-            serviceCharge !== null && serviceCharge > 0 && // Ensure serviceCharge is valid
-            additionalCharge !== null && additionalCharge > 0 // Ensure additionalCharge is valid
+          totalAmount > 0 && // Ensure totalAmount is a valid number greater than 0
+          shippingAddress && Object.keys(shippingAddress).length > 0 && // Ensure shippingAddress has data
+          shippingCharge !== null && shippingCharge > 0 && // Ensure shippingCharge is valid
+          serviceCharge !== null && serviceCharge > 0 && // Ensure serviceCharge is valid
+          additionalCharge !== null && additionalCharge > 0 // Ensure additionalCharge is valid
         );
-    };
-
+      };
+      
 
     const handleInvoiceSubmit = (() => {
         let data = {
@@ -276,38 +215,18 @@ const CreateInvoice = () => {
             "service_charge": serviceChargeandGst,
             "additional_charge": additionalCharge,
             "note": note,
-            "total": TotalAmountPrice
+            "total": totalAmount
         }
         console.log('createinvioicedataaaaaaaaaaaaaaaaaaaaaaaaa', JSON.stringify(data, null, 2));
         dispatch(resetInvoiceNo());
         setBtnLoader(true)
         HomeService.createInvoice(data)
             .then((res) => {
-                console.log('createeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', JSON.stringify(res));
+                console.log('createeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', res);
                 if (res && res.error == false) {
-                    setBtnLoader(true)
+                    setBtnLoader(false)
                     Toast.show('Invoice Create successfully')
-                    console.log('pdffffff=====================================================================',res?.data?.id);
-
-                    setInvoiceID(res?.data?.id)
-                    if (res) {
-                        console.log('inco0u988887777777777777777777777777777777777777777777777777777',JSON.stringify(res));
-                        let data = {
-                            "userid": userData?.userid,
-                            "invoice_id": res?.data?.id
-                        }
-                        console.log('pdfffffffffffffffffffffff==========================================================================',data);
-                        HomeService.genaratePDF(data)
-                            .then((res) => {
-                                if (res) {
-                                    console.log('jaehKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKgennnnnnnnnnnnnnnnnKKKKKKKkk', JSON.stringify(res));
-                                    NavigationService.navigate('InvoicePdfScreen', { invoiceIDdata:invoiceId })
-                                }
-                            })
-           
-                    } else {
-
-                    }
+                    NavigationService.navigate('InvoicePdfScreen', { invoiceId: res?.data?.id })
                 } else {
                     setBtnLoader(false)
                     Toast.show(res.message);
@@ -319,9 +238,6 @@ const CreateInvoice = () => {
                 setBtnLoader(false)
             })
     })
-
-
-
 
     return (
         <View style={styles.container}>
@@ -418,25 +334,25 @@ const CreateInvoice = () => {
                         </View>
                         <View style={styles.addproductBottom_view}>
                             {
-                                customer.state !== userProfile.state ? (
-                                    <View style={{ ...styles.addproductBottom_view, width: 230, marginTop: 0 }}>
+                                customer.state && userProfile.state ? (
+                                    <>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
-                                            CGST: <Text style={styles.cgst_number}>{product.cgst}%</Text>
+                                            IGST: <Text style={styles.cgst_number}>₹{product.cgst}</Text>
                                         </Text>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
-                                            SGST: <Text style={styles.cgst_number}>{product.sgst}%</Text>
+                                            CESS: <Text style={styles.cgst_number}>₹{product.sgst}</Text>
                                         </Text>
-                                        <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
-                                            CESS: <Text style={styles.cgst_number}>{product.sgst}%</Text>
-                                        </Text>
-                                    </View>
+                                    </>
                                 ) : (
                                     <>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
-                                            IGST: <Text style={styles.cgst_number}>{product.cgst}%</Text>
+                                            CGST: <Text style={styles.cgst_number}>₹{product.cgst}</Text>
                                         </Text>
                                         <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
-                                            CESS: <Text style={styles.cgst_number}>{product.sgst}%</Text>
+                                            SGST: <Text style={styles.cgst_number}>₹{product.sgst}</Text>
+                                        </Text>
+                                        <Text style={{ ...styles.cgst_txt, color: colors.secondaryFontColor }}>
+                                            CESS: <Text style={styles.cgst_number}>₹{product.sgst}</Text>
                                         </Text>
                                     </>
                                 )
@@ -582,10 +498,24 @@ const CreateInvoice = () => {
             </ScrollView>
 
             <View style={{ ...styles.customer_view, backgroundColor: colors.secondaryThemeColor }}>
+                <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>Total  <Text>₹{typeof totalAmount === 'number' ? totalAmount.toFixed(2) : '0.00'}</Text></Text>
+                {/* <Pressable
+                    onPress={() => handleInvoiceSubmit()}
+                    style={{
+                        ...styles.genarate_btn,
+                        backgroundColor: colors.buttonColor
+                    }}>
+                    {
+                        btnLoader ?
+                            <ActivityIndicator size={'small'} color={'#fff'} />
+                            :
+                            <Text style={{
+                                ...styles.genarate_btn_txt,
+                                color: colors.secondaryThemeColor
+                            }}>Generate</Text>
+                    }
 
-                <Text style={{ ...styles.total_txt, color: colors.secondaryFontColor }}>
-                    Total  <Text>₹ {totalAmount > 0 ? TotalAmountPrice.toFixed(2) : totalPrice.toFixed(2)} </Text>
-                </Text>
+                </Pressable> */}
 
                 <Pressable
                     onPress={() => handleInvoiceSubmit()}
@@ -923,4 +853,4 @@ const styles = StyleSheet.create({
 });
 
 //make this component available to the app
-export default CreateInvoice;
+export default Creeeeeeeeeeeeeeeee;

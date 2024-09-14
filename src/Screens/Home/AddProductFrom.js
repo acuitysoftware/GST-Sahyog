@@ -249,7 +249,7 @@ const AddddProducttttt = () => {
                         keyboardType='phone-pad'
                         value={productDPrice}
                         onChangeText={(val) => setProductDPrice(val)}
-                    />
+                    /> 
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Taxable value </Text>
                     <AppTextInput
                         inputContainerStyle={{ ...styles.inputcontainer_sty }}
