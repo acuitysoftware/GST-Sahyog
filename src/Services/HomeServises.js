@@ -81,7 +81,6 @@ async function genaratePDF(data) {
 }
 
 
-
 const HomeService = {
     getAccount,
     setAccount,

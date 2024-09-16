@@ -44,7 +44,7 @@ const EditCustomerFrom = () => {
         setLoading(true)
         HomeService.getCustomerSingle(data)
         .then((res)=>{
-            // console.log('getttttttttttttttttttcustomerrrrrrrrr',res);
+            console.log('getttttttttttttttttttcustomerrrrrrrrr=========================',res);
             if (res && res.error == false) {
                 setCustomerName(res?.data?.name)
                 setCustomerMobile(res?.data?.phone_number)
@@ -141,7 +141,7 @@ const EditCustomerFrom = () => {
 
     return (
         <View style={styles.container}>
-            <BackHeader title='Add Customer' />
+            <BackHeader title='Edit Customer' />
             {
                 loading?(
                     <View style={styles.loader}>
@@ -186,6 +186,7 @@ const EditCustomerFrom = () => {
                             keyboardType='phone-pad'
                             value={customerPin}
                             onChangeText={(val) => setCustomerPin(val)}
+                            maxLength={6}
                         />
                          <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>State</Text>
                             <Picker

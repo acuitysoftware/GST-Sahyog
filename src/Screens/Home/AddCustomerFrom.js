@@ -153,6 +153,7 @@ const AddCustomerFrom = () => {
                         keyboardType='phone-pad'
                         value={customerPin}
                         onChangeText={(val) => setCustomerPin(val)}
+                        maxLength={6}
                     />
 
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>State</Text>
@@ -166,8 +167,6 @@ const AddCustomerFrom = () => {
                         selectedValue={stateId}
                         onValueChange={(val) => setStateId(val)}
                     />
-
-
 
                     <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Address</Text>
                     <AppTextInput

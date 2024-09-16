@@ -1,6 +1,6 @@
 // import libraries
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Alert, PermissionsAndroid, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,8 @@ import UserStack from './src/Navigations/UserStack';
 import { useDispatch, useSelector } from 'react-redux';
 import AuthService from './src/Services/Auth';
 import { setUser } from './src/Redux/reducer/User';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import RNFS from 'react-native-fs';
 
 const Stack = createStackNavigator();
 
@@ -33,7 +35,7 @@ const App = () => {
     };
   
     fetchToken();
-    checkUser()
+    checkUser();
   }, []);
 
   const checkUser = async () => {
@@ -48,6 +50,7 @@ const App = () => {
       console.error('Error checking user:==============', error);
     }
   };
+
  
   return (
     <SafeAreaProvider>

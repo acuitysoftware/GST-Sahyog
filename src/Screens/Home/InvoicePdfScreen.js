@@ -1,6 +1,6 @@
 //import liraries
 import React, { Component, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator, RefreshControl, Platform, Alert, PermissionsAndroid } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { AppButton, Card, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -10,6 +10,8 @@ import { useRoute } from '@react-navigation/native';
 import NavigationService from '../../Services/Navigation';
 import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
+import RNFS from 'react-native-fs';
+import { request, PERMISSIONS, RESULTS, openSettings } from 'react-native-permissions';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -17,67 +19,40 @@ const InvoicePdfScreen = () => {
     const colors = useTheme()
     const route = useRoute()
     const { userData } = useSelector(state => state.User);
-    const Invoice_ID = route.params.invoiceIDdata
+    const Invoice_ID = route.params.invoiceIDdata;
     const [loading, setLoading] = useState(true);
-    const [userProfile, setUserProfile] = useState([])
     const [invoiceFullData, setInvoiceFullData] = useState({})
     console.log('fulllllllllllllllllllllllllllllllllllllldataaaaaaaaaaaaaaaaaaaaaaaaaa', invoiceFullData);
     const [totalQuantity, setTotalQuantity] = useState(null);
+    const [getPdfUrl, setGetPdfUrl] = useState('');
+    console.log('pdfffffffffffffffffffffffffffffffffffffffffffffffffffffffff', getPdfUrl);
     const [totalProduct, setTotalProduct] = useState([])
-    
-
+    const [refreshing, setRefreshing] = useState(false);
     console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', Invoice_ID)
 
 
-   
 
 
     useEffect(() => {
         getInvoiceData();
     }, [])
 
-    useEffect(() => {
-        getUserProfile()
-    }, [])
-
-    const getUserProfile = (() => {
-        let data = {
-            "userid": userData.userid
-        }
-        setLoading(true)
-        HomeService.setUserProfile(data)
-            .then((res) => {
-                console.log('usepppppppppppppppppppppppppppppppp',res);
-                
-                if (res && res.error == false) {
-                    setUserProfile(res?.data)
-                    // setLoading(false)
-                }
-            })
-            .catch((err) => {
-                console.log('fatchprofileerrrrrrr', err);
-                // setLoading(false)
-            })
-    })
-
-
     const getInvoiceData = (() => {
         let data = {
             "userid": userData?.userid,
             "invoice_id": Invoice_ID
         }
+
         setLoading(true)
         HomeService.FetchFullInvoiceData(data)
             .then((res) => {
-                console.log('fullllllllllllllllllllllinvoice=====================', JSON.stringify(res));
+                console.log('fullllllllllllllllllllllinvoice=========================================', JSON.stringify(res, null, 2));
                 if (res && res.error == false) {
                     setInvoiceFullData(res.data)
-                    // setTotalServiceCharge(res?.data?.service_charge)
+                    setGetPdfUrl(res?.data?.invoice_create_pdf_url)
                     setTotalProduct(res?.data?.product)
                     const totalQuantity = res?.data?.product?.reduce((sum, item) => sum + parseFloat(item.quantity), 0);
                     setTotalQuantity(totalQuantity)
-
-
                     setLoading(false)
                 }
             })
@@ -87,15 +62,136 @@ const InvoicePdfScreen = () => {
             })
     })
 
-    const [refreshing, setRefreshing] = useState(false);
-
     const onRefresh = useCallback(() => {
-      setRefreshing(true);
-      // Simulate an API call or data fetching
-      setTimeout(() => {
-        setRefreshing(false);
-      }, 500);
+        setRefreshing(true);
+        // Simulate an API call or data fetching
+        setTimeout(() => {
+            setRefreshing(false);
+        }, 500);
     }, []);
+
+
+    const requestStoragePermission = async () => {
+        if (Platform.OS === 'android') {
+            try {
+                // Check for Android 11 and above
+                if (Platform.Version >= 30) {
+                    const granted = await PermissionsAndroid.request(
+                        PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
+                        {
+                            title: "App Storage Permission",
+                            message: "App needs access to manage storage to download files",
+                            buttonNeutral: "Ask Me Later",
+                            buttonNegative: "Cancel",
+                            buttonPositive: "OK"
+                        }
+                    );
+    
+                    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                        console.log("Storage permission granted");
+                        downloadPDF(); // Your download logic here
+                    } else if (granted === PermissionsAndroid.RESULTS.DENIED) {
+                        Alert.alert('Permission Denied', 'You need to allow storage access to download files.');
+                    } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+                        handleBlockedPermission();
+                    }
+                } else {
+                    // For Android versions below 11 (API level 30)
+                    const granted = await PermissionsAndroid.request(
+                        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                        {
+                            title: "App Storage Permission",
+                            message: "App needs access to your storage to download files",
+                            buttonNeutral: "Ask Me Later",
+                            buttonNegative: "Cancel",
+                            buttonPositive: "OK"
+                        }
+                    );
+    
+                    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+                        console.log("Storage permission granted");
+                        downloadPDF(); // Your download logic here
+                    } else if (granted === PermissionsAndroid.RESULTS.DENIED) {
+                        Alert.alert('Permission Denied', 'You need to allow storage access to download files.');
+                    } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+                        handleBlockedPermission();
+                    }
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+        }
+    };
+    
+    // Function to handle when permission is blocked
+    const handleBlockedPermission = () => {
+        Alert.alert(
+            'Permission Blocked',
+            'Storage permission is blocked. Go to settings to enable it manually.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => openSettings() },
+            ]
+        );
+    };
+   
+    const downloadPDF = async () => {
+        const pdfUrl =getPdfUrl ;
+        const fileName = 'invoice.pdf';
+        const downloadDest = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+        try {
+            const response = await RNFS.downloadFile({
+                fromUrl: pdfUrl,
+                toFile: downloadDest,
+            }).promise;
+
+            if (response.statusCode === 200) {
+                Alert.alert('Download Complete', `File downloaded to: ${downloadDest}`);
+            } else {
+                Alert.alert('Download Failed', 'An error occurred while downloading the file.');
+            }
+        } catch (error) {
+            Alert.alert('Download Error', `An error occurred: ${error.message}`);
+        }
+    };
+
+  
+    // const downloadPDF = async () => {
+    //     // Request permission for Android
+    //     if (Platform.OS === 'android') {
+    //         const result = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
+
+    //         if (result !== RESULTS.GRANTED) {
+    //             Alert.alert('Permission Denied', 'You need to give storage permission to download the file.');
+    //             return;
+    //         }
+    //     }
+
+    //     const fileName = 'invoice.pdf';
+    //     const downloadDest = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+    //     try {
+    //         // Download the file
+    //         const response = await RNFS.downloadFile({
+    //             fromUrl: pastedURL,
+    //             toFile: downloadDest,
+    //         }).promise;
+
+    //         // Check if download was successful
+    //         if (response.statusCode === 200) {
+    //             Alert.alert('Download Complete', `File downloaded to: ${downloadDest}`);
+    //         } else {
+    //             Alert.alert('Download Failed', 'An error occurred while downloading the file.');
+    //         }
+    //     } catch (error) {
+    //         Alert.alert('Download Error', `An error occurred: ${error.message}`);
+    //     }
+    // };
+
+
+
+
 
     return (
         <View style={styles.container}>
@@ -106,14 +202,14 @@ const InvoicePdfScreen = () => {
                 </View>
             ) :
                 (
-                    <ScrollView 
-                    refreshControl={
-                        <RefreshControl
-                          refreshing={refreshing}
-                          onRefresh={onRefresh}
-                        />
-                      }
-                    showsVerticalScrollIndicator={false}>
+                    <ScrollView
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={onRefresh}
+                            />
+                        }
+                        showsVerticalScrollIndicator={false}>
                         <Card style={{ ...styles.card_sty, backgroundColor: colors.cardColor }}>
                             <View>
                                 <View style={styles.shop_view}>
@@ -126,26 +222,32 @@ const InvoicePdfScreen = () => {
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>State Code  : <Text style={styles.gstin_number}>{userProfile?.state}</Text></Text>
+                                        }}>State Code  : <Text style={styles.gstin_number}>{invoiceFullData?.user_state}</Text></Text>
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>Mobile : <Text style={styles.gstin_number}>{userProfile?.mobile_no}</Text></Text>
+                                        }}>Mobile : <Text style={styles.gstin_number}>{invoiceFullData?.user_phone}</Text></Text>
                                         <Text style={{
                                             ...styles.gstin_txt,
                                             color: colors.secondaryFontColor
-                                        }}>Email : <Text style={styles.gstin_number}>{userProfile?.email}</Text></Text>
-                                       
-                                      
+                                        }}>Email : <Text style={styles.gstin_number}>{invoiceFullData?.user_email}</Text></Text>
+                                        <Text style={{
+                                            ...styles.gstin_txt,
+                                            color: colors.secondaryFontColor
+                                        }}>Name : <Text style={styles.gstin_number}>{invoiceFullData?.user_name}</Text></Text>
+
+
                                     </View>
                                     <View style={{ ...styles.img_view, backgroundColor: colors.borderColor }}>
-                                        <Image source={require('../../assets/images/fashion.png')} style={styles.shop_img} />
+
+                                        <Image source={{ uri: invoiceFullData?.customer_img_url }} style={styles.shop_img} />
+                                        {/* <Image source={require('../../assets/images/fashion.png')} style={styles.shop_img} /> */}
                                     </View>
                                 </View>
                                 <Text style={{
-                                            ...styles.gstin_txt,
-                                            color: colors.secondaryFontColor
-                                        }}>Register Office : <Text style={styles.gstin_number}>{userProfile?.address}</Text></Text>
+                                    ...styles.gstin_txt,
+                                    color: colors.secondaryFontColor
+                                }}>Register Office : <Text style={styles.gstin_number}>{invoiceFullData?.user_address}</Text></Text>
                                 <View style={styles.shop_bottom_view}>
                                     <View>
                                         <Text style={{
@@ -221,9 +323,9 @@ const InvoicePdfScreen = () => {
                                     color: colors.secondaryFontColor
                                 }}>
                                     Address: <Text style={styles.gstin_number}>
-                                        {invoiceFullData?.shipping_address?.address1 + ' ' 
-                                        + invoiceFullData?.shipping_address?.address2 + ' '
-                                        + invoiceFullData?.shipping_address?.city
+                                        {invoiceFullData?.shipping_address?.address1 + ' '
+                                            + invoiceFullData?.shipping_address?.address2 + ' '
+                                            + invoiceFullData?.shipping_address?.city
                                         }
                                     </Text>
                                 </Text>
@@ -258,9 +360,11 @@ const InvoicePdfScreen = () => {
                                             <View style={styles.sample_view}>
                                                 <View>
                                                     <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>{product?.name}</Text>
-                                                    <Text style={{ ...styles.sample_id,
-                                                        fontSize:moderateScale(12),
-                                                        color: colors.secondaryFontColor }}>{`(qty: ${product?.quantity})`}</Text>
+                                                    <Text style={{
+                                                        ...styles.sample_id,
+                                                        fontSize: moderateScale(12),
+                                                        color: colors.secondaryFontColor
+                                                    }}>{`(qty: ${product?.quantity})`}</Text>
                                                     <Text style={{ ...styles.sample_id, color: colors.buttonColor }}>{`(HSN ${product?.hsn_code})`}</Text>
                                                 </View>
                                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>₹ {product?.product_price}</Text>
@@ -270,48 +374,86 @@ const InvoicePdfScreen = () => {
                                     )
                                 })
                             }
-                         
-                            <View style={{ ...styles.line, marginTop:0,borderColor: colors.secondaryFontColor }} />
+
+                            <View style={{ ...styles.line, marginTop: 0, borderColor: colors.secondaryFontColor }} />
                             <View style={{ ...styles.sample_view, marginTop: moderateScale(10) }}>
                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Sub Total </Text>
-                                <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>₹90Ch</Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>CGST (9%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90ch</Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>SGST (9%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90cx</Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Delivery Charge  </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.shipping_charge}</Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Service Charge </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹6000ch</Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>GST (18%) </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90cg </Text>
-                            </View>
-                            <View style={{ ...styles.sample_view, marginTop: moderateScale(15) }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Additional Charge  </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.additional_charge}</Text>
-                            </View>
-                            <View style={{ ...styles.totalbox_view, backgroundColor: colors.primaryFontColor }}>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryThemeColor }}>Total  </Text>
-                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryThemeColor }}> ₹{invoiceFullData?.total}</Text>
-                            </View>
-                            <View style={{ ...styles.note_view, borderColor: colors.borderColor }}>
-                                <Text style={{
-                                    ...styles.gst_percentage, color: colors.secondaryFontColor
-                                }}>Note : <Text style={styles.note_txt}>{invoiceFullData?.note}</Text></Text>
+                                <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>₹{invoiceFullData?.subtotal}</Text>
                             </View>
 
+                            {invoiceFullData?.totalgst && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>CGST (9%) </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ {invoiceFullData?.totalgst}</Text>
+                                </View>
+                            )}
+
+                            {/* {invoiceFullData?.igst && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>IGST (9%) </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ {invoiceFullData?.igst}</Text>
+                                </View>
+                            )} */}
+
+                            {/* {invoiceFullData?. && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>SGST (9%) </Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ {invoiceFullData?.}</Text>
+                            </View> 
+                            )} */}
+
+                            {invoiceFullData?.totalcess && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>CESS (9%) </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ {invoiceFullData?.totalcess}</Text>
+                                </View>
+                            )}
+
+                            {invoiceFullData?.shipping_charge && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Delivery Charge  </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.shipping_charge}</Text>
+                                </View>
+                            )}
+
+                            {invoiceFullData?.service_charge?.total && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Service Charge </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.service_charge?.total}</Text>
+                                </View>
+                            )}
+
+                            {/* <View style={{ ...styles.sample_view, marginTop: moderateScale(7) }}>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>GST (18%) </Text>
+                                <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹ 90cg </Text>
+                            </View> */}
+
+                            {invoiceFullData?.additional_charge && (
+                                <View style={{ ...styles.sample_view, marginTop: moderateScale(15) }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}>Additional Charge  </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryFontColor }}> ₹{invoiceFullData?.additional_charge}</Text>
+                                </View>
+                            )}
+
+                            {invoiceFullData?.total && (
+                                <View style={{ ...styles.totalbox_view, backgroundColor: colors.primaryFontColor }}>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryThemeColor }}>Total  </Text>
+                                    <Text style={{ ...styles.gst_percentage, color: colors.secondaryThemeColor }}>₹ {invoiceFullData?.totalprice}</Text>
+                                </View>
+                            )}
+
+                            {invoiceFullData?.note && (
+                                <View style={{ ...styles.note_view, borderColor: colors.borderColor }}>
+                                    <Text style={{
+                                        ...styles.gst_percentage, color: colors.secondaryFontColor
+                                    }}>Note : <Text style={styles.note_txt}>{invoiceFullData?.note}</Text></Text>
+                                </View>
+                            )}
+
                             <Text style={{ ...styles.shop_name, marginTop: moderateScale(10), color: colors.secondaryFontColor }}>Authorized Signature</Text>
-                            <Image source={require('../../assets/images/Signature.png')} style={styles.Signature_img} />
+
+                            <Image source={{ uri: invoiceFullData?.signature_image }} style={styles.Signature_img} />
+                            {/* <Image source={require('../../assets/images/Signature.png')} style={styles.Signature_img} /> */}
 
                             <View style={styles.date_view}>
                                 <Text style={{ ...styles.shop_name, color: colors.secondaryFontColor }}>Date :</Text>
@@ -349,7 +491,10 @@ const InvoicePdfScreen = () => {
                                 textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                                 style={{ ...styles.button_sty, backgroundColor: colors.invoicebutton }}
                                 title="Download"
-                                onPress={() =>   NavigationService.navigate('BottomTab', { screen: 'Home' })}
+                                // onPress={() => NavigationService.navigate('BottomTab', { screen: 'Home' })}
+
+                                // onPress={() => { requestStoragePermission() }}
+
                             />
                         </Card>
                     </ScrollView>
@@ -447,7 +592,7 @@ const styles = StyleSheet.create({
     },
     Signature_img: {
         height: moderateScale(60),
-        width: moderateScale(100),
+        width: moderateScale(120),
         resizeMode: 'contain',
         marginTop: moderateScale(5)
     },

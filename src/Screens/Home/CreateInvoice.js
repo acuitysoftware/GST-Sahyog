@@ -287,26 +287,31 @@ const CreateInvoice = () => {
                 if (res && res.error == false) {
                     setBtnLoader(true)
                     Toast.show('Invoice Create successfully')
-                    console.log('pdffffff=====================================================================',res?.data?.id);
-
-                    setInvoiceID(res?.data?.id)
+                    console.log('pdffffff=====================================================================', res?.data?.id);
+                    // setInvoiceID(res?.data?.id)
                     if (res) {
-                        console.log('inco0u988887777777777777777777777777777777777777777777777777777',JSON.stringify(res));
+                        console.log('inco0u988887777777777777777777777777777777777777777777777777777', JSON.stringify(res));
                         let data = {
                             "userid": userData?.userid,
                             "invoice_id": res?.data?.id
                         }
-                        console.log('pdfffffffffffffffffffffff==========================================================================',data);
+                        // console.log('pdfffffffffffffffffffffff==========================================================================', data);
                         HomeService.genaratePDF(data)
+                        // console.log('aftebkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk9999999999999999999999999999999999pdf', res)
                             .then((res) => {
                                 if (res) {
                                     console.log('jaehKHKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKgennnnnnnnnnnnnnnnnKKKKKKKkk', JSON.stringify(res));
-                                    NavigationService.navigate('InvoicePdfScreen', { invoiceIDdata:invoiceId })
+                                    console.log('invoicepdfffffffffffffffffffffffff0000000000000000000000000000000000000000',res?.data?.id);    
+                                    NavigationService.navigate('InvoicePdfScreen', { invoiceIDdata: res?.data?.invoice_id })
                                 }
                             })
-           
-                    } else {
+                            .catch((err) => {
+                                console.log('genPdf', err);
 
+                            })
+
+                    } else {
+                        console.log('somthingwrong');
                     }
                 } else {
                     setBtnLoader(false)
