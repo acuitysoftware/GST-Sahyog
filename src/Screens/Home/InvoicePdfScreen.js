@@ -1,6 +1,6 @@
 //import liraries
 import React, { Component, useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator, RefreshControl, Platform, Alert, PermissionsAndroid } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, Dimensions, ActivityIndicator, RefreshControl, Platform, Alert, PermissionsAndroid, Linking } from 'react-native';
 import BackHeader from '../../Components/Header/BackHeader';
 import { AppButton, Card, Icon, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -11,7 +11,8 @@ import NavigationService from '../../Services/Navigation';
 import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
 import RNFS from 'react-native-fs';
-import { request, PERMISSIONS, RESULTS, openSettings } from 'react-native-permissions';
+import RNFetchBlob from 'rn-fetch-blob';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -70,128 +71,64 @@ const InvoicePdfScreen = () => {
         }, 500);
     }, []);
 
+    const pdfUrl = getPdfUrl;
+
+
+
 
     const requestStoragePermission = async () => {
-        if (Platform.OS === 'android') {
+        if (Platform.OS === 'android' && Platform.Version < 30) {
             try {
-                // Check for Android 11 and above
-                if (Platform.Version >= 30) {
-                    const granted = await PermissionsAndroid.request(
-                        PermissionsAndroid.PERMISSIONS.MANAGE_EXTERNAL_STORAGE,
-                        {
-                            title: "App Storage Permission",
-                            message: "App needs access to manage storage to download files",
-                            buttonNeutral: "Ask Me Later",
-                            buttonNegative: "Cancel",
-                            buttonPositive: "OK"
-                        }
-                    );
-    
-                    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                        console.log("Storage permission granted");
-                        downloadPDF(); // Your download logic here
-                    } else if (granted === PermissionsAndroid.RESULTS.DENIED) {
-                        Alert.alert('Permission Denied', 'You need to allow storage access to download files.');
-                    } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-                        handleBlockedPermission();
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                    {
+                        title: 'Storage Permission Required',
+                        message: 'App needs access to your storage to download files',
                     }
-                } else {
-                    // For Android versions below 11 (API level 30)
-                    const granted = await PermissionsAndroid.request(
-                        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                        {
-                            title: "App Storage Permission",
-                            message: "App needs access to your storage to download files",
-                            buttonNeutral: "Ask Me Later",
-                            buttonNegative: "Cancel",
-                            buttonPositive: "OK"
-                        }
-                    );
-    
-                    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                        console.log("Storage permission granted");
-                        downloadPDF(); // Your download logic here
-                    } else if (granted === PermissionsAndroid.RESULTS.DENIED) {
-                        Alert.alert('Permission Denied', 'You need to allow storage access to download files.');
-                    } else if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-                        handleBlockedPermission();
-                    }
-                }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
             } catch (err) {
                 console.warn(err);
+                return false;
             }
         }
+        return true;
     };
-    
-    // Function to handle when permission is blocked
-    const handleBlockedPermission = () => {
-        Alert.alert(
-            'Permission Blocked',
-            'Storage permission is blocked. Go to settings to enable it manually.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Open Settings', onPress: () => openSettings() },
-            ]
-        );
-    };
-   
-    const downloadPDF = async () => {
-        const pdfUrl =getPdfUrl ;
-        const fileName = 'invoice.pdf';
-        const downloadDest = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
-        try {
-            const response = await RNFS.downloadFile({
-                fromUrl: pdfUrl,
-                toFile: downloadDest,
-            }).promise;
-
-            if (response.statusCode === 200) {
-                Alert.alert('Download Complete', `File downloaded to: ${downloadDest}`);
-            } else {
-                Alert.alert('Download Failed', 'An error occurred while downloading the file.');
-            }
-        } catch (error) {
-            Alert.alert('Download Error', `An error occurred: ${error.message}`);
+    // Download the PDF file to the Downloads folder
+    const downloadFile = async () => {
+        const permissionGranted = await requestStoragePermission();
+        if (!permissionGranted) {
+            Alert.alert('Permission Denied', 'Storage permission is required to download files.');
+            return;
         }
+
+        const { dirs } = RNFetchBlob.fs;
+        const downloadPath = `${dirs.DownloadDir}/invoice.pdf`;
+
+        RNFetchBlob.config({
+            fileCache: true,
+            appendExt: 'pdf', // Specify file extension
+            addAndroidDownloads: {
+                useDownloadManager: true, // Use Android's built-in download manager
+                notification: true, // Show download notification
+                path: downloadPath,
+                description: 'Downloading invoice PDF',
+                title: 'Invoice PDF',
+                mime: 'application/pdf', // Set MIME type for PDF
+                mediaScannable: true, // Make the file visible in the user's file manager
+            },
+        })
+            .fetch('GET', pdfUrl)
+            .then((res) => {
+                console.log('File saved to:', res.path());
+                Alert.alert('Download Complete', `File saved to: ${res.path()}`);
+            })
+            .catch((err) => {
+                console.error('Download error:', err);
+                Alert.alert('Download Failed', 'There was an error downloading the file.');
+            });
     };
-
-  
-    // const downloadPDF = async () => {
-    //     // Request permission for Android
-    //     if (Platform.OS === 'android') {
-    //         const result = await request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE);
-
-    //         if (result !== RESULTS.GRANTED) {
-    //             Alert.alert('Permission Denied', 'You need to give storage permission to download the file.');
-    //             return;
-    //         }
-    //     }
-
-    //     const fileName = 'invoice.pdf';
-    //     const downloadDest = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-
-    //     try {
-    //         // Download the file
-    //         const response = await RNFS.downloadFile({
-    //             fromUrl: pastedURL,
-    //             toFile: downloadDest,
-    //         }).promise;
-
-    //         // Check if download was successful
-    //         if (response.statusCode === 200) {
-    //             Alert.alert('Download Complete', `File downloaded to: ${downloadDest}`);
-    //         } else {
-    //             Alert.alert('Download Failed', 'An error occurred while downloading the file.');
-    //         }
-    //     } catch (error) {
-    //         Alert.alert('Download Error', `An error occurred: ${error.message}`);
-    //     }
-    // };
-
-
-
-
 
     return (
         <View style={styles.container}>
@@ -491,11 +428,12 @@ const InvoicePdfScreen = () => {
                                 textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                                 style={{ ...styles.button_sty, backgroundColor: colors.invoicebutton }}
                                 title="Download"
-                                // onPress={() => NavigationService.navigate('BottomTab', { screen: 'Home' })}
-
-                                // onPress={() => { requestStoragePermission() }}
-
+                                onPress={async () => {
+                                    await downloadFile(); // Ensure that downloadFile completes before navigating
+                                    NavigationService.navigate('BottomTab', { screen: 'Home' });
+                                }}
                             />
+
                         </Card>
                     </ScrollView>
                 )}
