@@ -23,7 +23,7 @@ const HomeHeader = () => {
     const [email, setEmail] = useState('')
     const [phoneNumber, setPhoneNumber] = useState('')
     const [companyLogo, setCompanyLogo] = useState('')
-    console.log('imgggggggggggggggggg',companyLogo);
+    // console.log('imgggggggggggggggggg',companyLogo);
     
 
     const toggleModal = () => {

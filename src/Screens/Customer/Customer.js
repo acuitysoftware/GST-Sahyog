@@ -13,6 +13,8 @@ const Customer = () => {
     const colors = useTheme();
     const { userData } = useSelector(state => state.User);
     const [allCustomer, setAllCustomer] = useState([]);
+    const [filteredCustomer, setFilteredCustomer] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
 
     useFocusEffect(
@@ -21,6 +23,7 @@ const Customer = () => {
         }, [])
     );
 
+    // Fetch all customers
     const allUserList = () => {
         let data = {
             "userid": userData?.userid
@@ -32,6 +35,7 @@ const Customer = () => {
                 console.log('Response:=================', JSON.stringify(res));
                 if (res && res.error === false) {
                     setAllCustomer(res.data);
+                    setFilteredCustomer(res.data); // Initially, show all customers
                 }
                 setLoading(false);
             })
@@ -41,6 +45,7 @@ const Customer = () => {
             });
     };
 
+    // Delete a customer account
     const delAccount = (itemId) => {
         let data = {
             "userid": userData?.userid,
@@ -49,13 +54,26 @@ const Customer = () => {
         HomeService.deleteAccount(data)
             .then((res) => {
                 if (res && res.error === false) {
-                    // Remove deleted customer from the list
                     setAllCustomer(prevCustomers => prevCustomers.filter(customer => customer.id !== itemId));
+                    setFilteredCustomer(prevCustomers => prevCustomers.filter(customer => customer.id !== itemId));
                 }
             })
             .catch((err) => {
                 console.log('Error deleting customer:', err);
             });
+    };
+
+    // Handle search query change and filter the customer list
+    const handleSearch = (text) => {
+        setSearchQuery(text);
+        if (text) {
+            const filteredData = allCustomer.filter(customer => 
+                customer.name.toLowerCase().startsWith(text.toLowerCase())
+            );
+            setFilteredCustomer(filteredData);
+        } else {
+            setFilteredCustomer(allCustomer); // Reset to full list if search is cleared
+        }
     };
 
     return (
@@ -64,6 +82,8 @@ const Customer = () => {
             <View style={{ ...styles.search_view, backgroundColor: colors.secondaryThemeColor }}>
                 <AppTextInput
                     placeholder="Search..."
+                    value={searchQuery}
+                    onChangeText={handleSearch}
                     rightAction={
                         <Icon
                             name='search1'
@@ -88,7 +108,7 @@ const Customer = () => {
                 <View style={styles.loader}>
                     <ActivityIndicator size="large" color={colors.buttonColor} />
                 </View>
-            ) : allCustomer.length === 0 ? (
+            ) : filteredCustomer.length === 0 ? (
                 <View style={styles.loader}>
                     <Image source={require('../../assets/images/empty.png')} style={styles.nodata_sty} />
                 </View>
@@ -96,7 +116,7 @@ const Customer = () => {
                 <View style={{ marginBottom: moderateScale(160) }}>
                     <FlatList
                         showsVerticalScrollIndicator={false}
-                        data={allCustomer}
+                        data={filteredCustomer}
                         renderItem={({ item, index }) => (
                             <CastomerList item={item} index={index} delAccount={delAccount} />
                         )}

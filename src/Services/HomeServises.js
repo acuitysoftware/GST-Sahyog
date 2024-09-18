@@ -80,6 +80,15 @@ async function genaratePDF(data) {
     return await HttpClient.post('/invoice/generate_invoice.php', data);
 }
 
+async function HSN_download(data) {
+    return await HttpClient.post('/invoice/dataxls/datacollect_hsn.php', data);
+}
+
+async function Invoice_download(data) {
+    return await HttpClient.post('/invoice/dataxls/datacollect.php', data);
+}
+
+
 
 const HomeService = {
     getAccount,
@@ -105,7 +114,9 @@ const HomeService = {
     FetchFullInvoiceData,
     setGstDatafatch,
     sethnsCode,
-    genaratePDF
+    genaratePDF,
+    HSN_download,
+    Invoice_download
 }
 
 export default HomeService;

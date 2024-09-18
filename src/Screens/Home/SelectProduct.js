@@ -1,5 +1,4 @@
-
-//import liraries
+// Import libraries
 import React, { Component, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { AppTextInput, Icon, useTheme } from 'react-native-basic-elements';
@@ -11,12 +10,13 @@ import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
 import { useFocusEffect } from '@react-navigation/native';
 
-// create a component
 const SelectProduct = () => {
-    const colors = useTheme()
+    const colors = useTheme();
     const { userData } = useSelector(state => state.User);
     const [allProduct, setAllProduct] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState(''); // State for search query
+
     useFocusEffect(
         useCallback(() => {
             allProductList();
@@ -50,10 +50,9 @@ const SelectProduct = () => {
         };      
         HomeService.deleteProduct(data)
             .then((res) => {
-                // console.log('delllllllllllllllllproductttttttttttt',res);
                 if (res && res.error === false) {
-                    // Remove deleted customer from the list
-                    setAllProduct(prevCustomers => prevCustomers.filter(customer => customer.id !== itemId));
+                    // Remove deleted product from the list
+                    setAllProduct(prevProducts => prevProducts.filter(product => product.id !== itemId));
                 }
             })
             .catch((err) => {
@@ -61,6 +60,15 @@ const SelectProduct = () => {
             });
     };
 
+    // Filter products based on search query
+    const filterProducts = () => {
+        if (searchQuery.trim() === '') {
+            return allProduct;
+        }
+        return allProduct.filter(product =>
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()) // Filtering by product name
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -68,11 +76,15 @@ const SelectProduct = () => {
             <View style={{ ...styles.search_view, backgroundColor: colors.secondaryThemeColor }}>
                 <AppTextInput
                     placeholder="Search..."
-                    rightAction={<Icon
-                        name='search1'
-                        type='AntDesign'
-                        color={colors.buttonColor}
-                    />}
+                    value={searchQuery} // Bind searchQuery state
+                    onChangeText={(text) => setSearchQuery(text)} // Update searchQuery on change
+                    rightAction={
+                        <Icon
+                            name='search1'
+                            type='AntDesign'
+                            color={colors.buttonColor}
+                        />
+                    }
                     mainContainerStyle={{
                         width: moderateScale(250),
                     }}
@@ -91,7 +103,7 @@ const SelectProduct = () => {
                 <View style={styles.loader}>
                     <ActivityIndicator size="large" color={colors.buttonColor} />
                 </View>
-            ) : allProduct.length === 0 ? (
+            ) : filterProducts().length === 0 ? (
                 <View style={styles.loader}>
                     <Image source={require('../../assets/images/empty.png')} style={styles.nodata_sty} />
                 </View>
@@ -99,9 +111,9 @@ const SelectProduct = () => {
                 <View style={{ marginBottom: moderateScale(160) }}>
                     <FlatList
                         showsVerticalScrollIndicator={false}
-                        data={allProduct}
+                        data={filterProducts()} // Filtered products list
                         renderItem={({ item, index }) => (
-                            <SelectProductList item={item} index={index}  delProduct={delProduct} />
+                            <SelectProductList item={item} index={index} delProduct={delProduct} />
                         )}
                         keyExtractor={(item, index) => index.toString()}
                     />
@@ -111,7 +123,7 @@ const SelectProduct = () => {
     );
 };
 
-// define your styles
+// Define styles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -142,6 +154,4 @@ const styles = StyleSheet.create({
     },
 });
 
-//make this component available to the app
 export default SelectProduct;
-

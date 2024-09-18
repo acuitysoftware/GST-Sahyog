@@ -13,6 +13,7 @@ import HomeService from '../../Services/HomeServises';
 import RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import Toast from "react-native-simple-toast";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
@@ -26,13 +27,10 @@ const InvoicePdfScreen = () => {
     console.log('fulllllllllllllllllllllllllllllllllllllldataaaaaaaaaaaaaaaaaaaaaaaaaa', invoiceFullData);
     const [totalQuantity, setTotalQuantity] = useState(null);
     const [getPdfUrl, setGetPdfUrl] = useState('');
-    console.log('pdfffffffffffffffffffffffffffffffffffffffffffffffffffffffff', getPdfUrl);
+    // console.log('pdfffffffffffffffffffffffffffffffffffffffffffffffffffffffff', getPdfUrl);
     const [totalProduct, setTotalProduct] = useState([])
     const [refreshing, setRefreshing] = useState(false);
-    console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', Invoice_ID)
-
-
-
+    // console.log('invvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', Invoice_ID)
 
     useEffect(() => {
         getInvoiceData();
@@ -47,7 +45,7 @@ const InvoicePdfScreen = () => {
         setLoading(true)
         HomeService.FetchFullInvoiceData(data)
             .then((res) => {
-                console.log('fullllllllllllllllllllllinvoice=========================================', JSON.stringify(res, null, 2));
+                // console.log('fullllllllllllllllllllllinvoice=========================================', JSON.stringify(res, null, 2));
                 if (res && res.error == false) {
                     setInvoiceFullData(res.data)
                     setGetPdfUrl(res?.data?.invoice_create_pdf_url)
@@ -122,11 +120,12 @@ const InvoicePdfScreen = () => {
             .fetch('GET', pdfUrl)
             .then((res) => {
                 console.log('File saved to:', res.path());
-                Alert.alert('Download Complete', `File saved to: ${res.path()}`);
+                // Alert.alert('Download Complete', `File saved to: ${res.path()}`);
+                Toast.show('PDF Download Successfully....!');
             })
             .catch((err) => {
                 console.error('Download error:', err);
-                Alert.alert('Download Failed', 'There was an error downloading the file.');
+                // Alert.alert('Download Failed', 'There was an error downloading the file.');
             });
     };
 

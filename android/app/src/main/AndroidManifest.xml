@@ -42,6 +42,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Other activities -->
+        <activity
+            android:name=".AnotherActivity"
+            android:exported="false">
+        </activity>
+
+        <!-- Services -->
+        <service
+            android:name=".YourService"
+            android:exported="false" />
+
     </application>
 
 </manifest>

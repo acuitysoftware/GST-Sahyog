@@ -1,6 +1,6 @@
 //import liraries
 import React, { Component, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView, Prassable, TouchableOpacity, Pressable, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ScrollView, TouchableOpacity, Pressable, Modal, ActivityIndicator, Alert, Platform, PermissionsAndroid } from 'react-native';
 import HomeHeader from '../../Components/Header/HomeHeader';
 import { AppButton, AppTextInput, Card, Picker, useTheme } from 'react-native-basic-elements';
 import { moderateScale } from '../../Constants/PixelRatio';
@@ -10,32 +10,55 @@ import moment from 'moment';
 import NavigationService from '../../Services/Navigation';
 import { useSelector } from 'react-redux';
 import HomeService from '../../Services/HomeServises';
+import RNFetchBlob from 'rn-fetch-blob';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import Toast from "react-native-simple-toast";
 
 const { height, width } = Dimensions.get('screen')
 // create a component
 const Home = () => {
     const colors = useTheme()
     const { userData } = useSelector(state => state.User)
-
-
-    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-    const [DateData, setDateData] = useState('');
     const [homeGstData, sethomeGstData] = useState({});
-    const [Date, setDate] = useState('');
     const [dropdownValue, setDropdownValue] = useState('');
     const [loading, setLoading] = useState(true);
-    const showDatePicker = () => {
-        setDatePickerVisibility(true);
+    const [HSNurl,setHSNUrl] = useState('')
+    const [Invoiceurl,setInvoiceUrl] = useState('')
+
+    const [isStartDatePickerVisible, setStartDatePickerVisibility] = useState(false);
+    const [StartDateData, setStartDateData] = useState('');
+    const [StartDate, setStartDate] = useState('');
+
+    const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false);
+    const [EndDateData, setEndDateData] = useState('');
+    const [EndDate, setEndDate] = useState('');
+
+
+    const showStartDatePicker = () => {
+        setStartDatePickerVisibility(true);
     };
 
-    const hideDatePicker = () => {
-        setDatePickerVisibility(false);
+    const hideStartDatePicker = () => {
+        setStartDatePickerVisibility(false);
     };
 
-    const DatehandleConfirm = (date) => {
-        console.log('dateeeeeeee', moment(date).format('YYYY-MM-DD'));
-        setDate(date);
-        hideDatePicker();
+    const StartDatehandleConfirm = (date) => {
+        console.log('dateeeeeeee', moment(date).format('YY-MM-DD'));
+        setStartDate(moment(date).format('YYYY-MM-DD'));
+        hideStartDatePicker();
+    };
+
+    const showEndDatePicker = () => {
+        setEndDatePickerVisibility(true);
+    };
+
+    const hideEndDatePicker = () => {
+        setEndDatePickerVisibility(false);
+    };
+
+    const EndDatehandleConfirm = (date) => {
+        setEndDate(moment(date).format('YYYY-MM-DD'));
+        hideEndDatePicker();
     };
 
     useEffect(() => {
@@ -49,7 +72,6 @@ const Home = () => {
         setLoading(true)
         HomeService.setGstDatafatch(data)
             .then((res) => {
-                console.log('dashhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh', JSON.stringify(res));
                 if (res && res.error == true) {
                     sethomeGstData(res.data)
                     setLoading(false)
@@ -61,7 +83,151 @@ const Home = () => {
             })
     })
 
-    console.log('userrrrrrrrrrrrrrrrrrrrrrr', homeGstData);
+    const getHSNDownload = (() => {
+        let data = {
+            "userid": userData?.userid,
+            "start_date": StartDate,
+            "end_date": EndDate
+
+        }
+        console.log('dwnloaddddddddddddddd', data);
+        HomeService.HSN_download(data)
+            .then((res) => {
+                console.log('hsndownloadddddddddddddddddresss====================', res);
+
+                if (res && res.error == false) {
+                    setHSNUrl(res.xzlsurl)
+                    downloadHSNFile()
+                }
+            })
+            .catch((err) => {
+                console.log('hsndownload', err);
+
+            })
+    })
+
+    const getHsnUrl = HSNurl;
+
+
+    const requestStoragePermission = async () => {
+        if (Platform.OS === 'android' && Platform.Version < 30) {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+                    {
+                        title: 'Storage Permission Required',
+                        message: 'App needs access to your storage to download files',
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } catch (err) {
+                console.warn(err);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const downloadHSNFile = async () => {
+        const permissionGranted = await requestStoragePermission();
+        if (!permissionGranted) {
+            Alert.alert('Permission Denied', 'Storage permission is required to download files.');
+            return;
+        }
+    
+        const { dirs } = RNFetchBlob.fs;
+        const downloadPath = `${dirs.DownloadDir}/Invoice_HSN_excel_sheet.xlsx`; // Change file name and extension
+    
+        RNFetchBlob.config({
+            fileCache: true,
+            appendExt: 'xlsx', // Specify file extension for Excel
+            addAndroidDownloads: {
+                useDownloadManager: true, // Use Android's built-in download manager
+                notification: true, // Show download notification
+                path: downloadPath,
+                description: 'Downloading HSN Excel Sheet',
+                title: 'HSN Excel Sheet',
+                mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // Set MIME type for Excel
+                mediaScannable: true, // Make the file visible in the user's file manager
+            },
+        })
+            .fetch('GET', getHsnUrl) // Use the XLSX URL
+            .then((res) => {
+                console.log('File saved to:', res.path());
+                Toast.show('Excel file downloaded successfully!', Toast.SHORT);
+            })
+            .catch((err) => {
+                console.error('Download error:', err);
+                Alert.alert('Download Failed', 'There was an error downloading the file.');
+            });
+    };
+
+    const getInvoiceDownload = () => {
+        let data = {
+            "userid": userData?.userid,
+            "start_date": StartDate,
+            "end_date": EndDate
+        };
+        console.log('Download request:', data);
+        HomeService.Invoice_download(data)
+            .then((res) => {
+                if (res && res.error == false) {
+                    console.log('Invoice download response:', res);
+                    const invoiceUrl = res.xzlsurl;
+                    console.log('Invoice download URL:', invoiceUrl);
+                    downloadInvoiceFile(invoiceUrl); // Pass the URL directly to the download function
+                }
+            })
+            .catch((err) => {
+                console.log('Invoice download error:', err);
+            });
+    };
+    
+    const downloadInvoiceFile = async (invoiceUrl) => {
+        const permissionGranted = await requestStoragePermission();
+        if (!permissionGranted) {
+            Alert.alert('Permission Denied', 'Storage permission is required to download files.');
+            return;
+        }
+    
+        const { dirs } = RNFetchBlob.fs;
+        const downloadPath = `${dirs.DownloadDir}/Invoice_total_excel_sheet.xlsx`;
+    
+        console.log('Starting download for URL:', invoiceUrl);
+    
+        if (!invoiceUrl || !invoiceUrl.startsWith('http')) {
+            Alert.alert('Invalid URL', 'The invoice URL is invalid or missing.');
+            return;
+        }
+    
+        RNFetchBlob.config({
+            fileCache: true,
+            appendExt: 'xlsx',
+            addAndroidDownloads: {
+                useDownloadManager: true,
+                notification: true,
+                path: downloadPath,
+                description: 'Downloading Invoice Excel Sheet',
+                title: 'Invoice Excel Sheet',
+                mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                mediaScannable: true,
+            },
+        })
+        .fetch('GET', invoiceUrl)
+        .then((res) => {
+            console.log('File saved to:', res.path());
+            if (Platform.OS === 'android') {
+                Toast.show('Excel file downloaded successfully!', Toast.SHORT);
+            }
+        })
+        .catch((err) => {
+            console.error('Download error:', err);
+            Alert.alert('Download Failed', 'There was an error downloading the file.');
+        });
+    };
+    
+    
+
 
     return (
         <View style={styles.container}>
@@ -146,37 +312,55 @@ const Home = () => {
 
                     <Card style={styles.download_card}>
                         <Text style={{ ...styles.download_txt, color: colors.secondaryFontColor }}>Download Report</Text>
-                        <Pressable onPress={showDatePicker}
+
+                        <Text style={{ ...styles.startdate_txt, color: colors.secondaryFontColor }}>Start Date</Text>
+                        <Pressable onPress={showStartDatePicker}
                             style={{ ...styles.time_input_sty, borderColor: colors.borderColor }}>
                             <DateTimePickerModal
-                                isVisible={isDatePickerVisible}
+                                isVisible={isStartDatePickerVisible}
                                 mode="date"
-                                onConfirm={val => { DatehandleConfirm(val); setDateData(val); }}
-                                onCancel={hideDatePicker}
+                                onConfirm={val => { StartDatehandleConfirm(val); setStartDateData(val); }}
+                                onCancel={hideStartDatePicker}
                             />
-                            <Pressable onPress={showDatePicker}>
+                            <Pressable onPress={showStartDatePicker}>
                                 <Text style={{ ...styles.time_txt, color: colors.secondaryFontColor }}>
-                                    {!DateData == '' ? moment(DateData).format('L') : 'YYYY/MM/DD'}
+                                    {StartDateData ? moment(StartDateData).format('YYYY-MM-DD') : 'YYYY-MM-DD'}
                                 </Text>
                             </Pressable>
-                            <Pressable onPress={showDatePicker} >
+                            <Pressable onPress={showStartDatePicker} >
+                                <Image source={require('../../assets/images/calendar.png')} style={styles.calender_img} />
+                            </Pressable>
+                        </Pressable>
+
+                        <Text style={{ ...styles.startdate_txt, color: colors.secondaryFontColor }}>End Date</Text>
+                        <Pressable onPress={showEndDatePicker}
+                            style={{ ...styles.time_input_sty, borderColor: colors.borderColor }}>
+                            <DateTimePickerModal
+                                isVisible={isEndDatePickerVisible}
+                                mode="date"
+                                onConfirm={val => { EndDatehandleConfirm(val); setEndDateData(val); }}
+                                onCancel={hideEndDatePicker}
+                            />
+                            <Pressable onPress={showEndDatePicker}>
+                                <Text style={{ ...styles.time_txt, color: colors.secondaryFontColor }}>
+                                    {EndDateData ? moment(EndDateData).format('YYYY-MM-DD') : 'YYYY-MM-DD'}
+                                </Text>
+                            </Pressable>
+                            <Pressable onPress={showEndDatePicker} >
                                 <Image source={require('../../assets/images/calendar.png')} style={styles.calender_img} />
                             </Pressable>
                         </Pressable>
 
                         <Picker
-                            // labelKey="name"
-                            // valueKey="id"
                             placeholder="Choose Your Report"
-                            // options={Satate}
                             options={[
                                 {
-                                    label: 'Item 1',
-                                    value: 'item1'
+                                    label: 'HSN wise report',
+                                    value: 'HSN wise report'
                                 },
                                 {
-                                    label: 'Item 2',
-                                    value: 'item2'
+                                    label: 'Invoice wise report',
+                                    value: 'Invoice wise report'
                                 }
                             ]}
                             textStyle={{ ...styles.picker_txt, color: colors.secondaryFontColor }}
@@ -184,11 +368,18 @@ const Home = () => {
                             selectedValue={dropdownValue}
                             onValueChange={(val) => setDropdownValue(val)}
                         />
+
                         <AppButton
                             textStyle={{ ...styles.buttn_txt, color: colors.buttontxtColor }}
                             style={styles.button_sty}
                             title="Download Report"
-                            onPress={() => NavigationService.navigate('UserStack')}
+                            onPress={() => {
+                                if (dropdownValue === 'HSN wise report') {
+                                    getHSNDownload();
+                                } else if (dropdownValue === 'Invoice wise report') {
+                                    getInvoiceDownload();
+                                }
+                            }}
                         />
                     </Card>
                     <View style={{ ...styles.bottom_view }}>
@@ -291,8 +482,13 @@ const styles = StyleSheet.create({
         marginTop: moderateScale(15)
     },
     download_txt: {
-        fontFamily: FONTS.Jost.medium,
+        fontFamily: FONTS.Jost.semibold,
         fontSize: moderateScale(15)
+    },
+    startdate_txt: {
+        fontFamily: FONTS.Jost.medium,
+        fontSize: moderateScale(13),
+        marginTop: moderateScale(10)
     },
     calender_img: {
         height: moderateScale(20),
@@ -311,7 +507,7 @@ const styles = StyleSheet.create({
         marginTop: moderateScale(7)
     },
     time_txt: {
-        fontFamily: FONTS.Jost.regular,
+        fontFamily: FONTS.OpenSans.medium,
         fontSize: moderateScale(12)
     },
     picker_sty: {

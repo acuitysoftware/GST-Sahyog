@@ -42,8 +42,8 @@ const Profile = () => {
 
 
 
-    console.log('imgggggggggggggggggggggggggggggdoccccccccccggggggggggggggggggg', ImageCompanyData);
-    console.log('imgcommmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm', ImageSignData);
+    // console.log('imgggggggggggggggggggggggggggggdoccccccccccggggggggggggggggggg', ImageCompanyData);
+    // console.log('imgcommmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm', ImageSignData);
 
 
 
