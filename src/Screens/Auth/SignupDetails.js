@@ -26,6 +26,8 @@ const SignupDetails = () => {
     const [GSTno, setGSTno] = useState(regData?.gst_no)
     const [buttonLoader, setButtonLoader] = useState(false);
     const [allRegData, setAllRegData] = useState({})
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordCnf, setShowPasswordCnf] = useState(false);
     const [isModalVisible, setModalVisible] = useState(false);
     const toggleModal = () => {
         setModalVisible(!isModalVisible);
@@ -44,13 +46,13 @@ const SignupDetails = () => {
         mobile: yup.string().matches(/^[6-9]\d{9}$/, 'Invalid mobile number').required('Phone number is required'),
         email: yup.string().email('Invalid email').required('Email is required'),
         password: yup
-            .string()
-            .min(6, 'Password must be at least 6 characters')
-            .matches(
-                /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/,
-                'Password must contain at least one letter and one number'
-            )
-            .required('Password is required'),
+        .string()
+        .min(6, 'Password must be at least 6 characters')
+        .matches(
+            /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+            'Password must contain at least one letter, one number, and one special character'
+        )
+        .required('Password is required'),
         Cnfpassword: yup
             .string()
             .oneOf([yup.ref('password'), null], 'Passwords must match')
@@ -353,6 +355,7 @@ const SignupDetails = () => {
                                 onChangeText={handleChange('mobile')}
                                 onBlur={handleBlur('mobile')}
                                 editable={false}
+                                maxLength={10}
                             />
                             {errors.mobile && touched.mobile && (
                                 <Text style={styles.errorText}>{errors.mobile}</Text>
@@ -382,7 +385,14 @@ const SignupDetails = () => {
                                 value={values.password}
                                 onChangeText={handleChange('password')}
                                 onBlur={handleBlur('password')}
-                            // errorMessage={touched.password && errors.password ? errors.password : ''}
+                                secureTextEntry={!showPassword}
+                                rightAction={
+                                    <Icon
+                                        name={showPassword ? 'eye-off' : 'eye'}
+                                        type='Ionicon'
+                                        onPress={() => setShowPassword(!showPassword)}  
+                                    />
+                                }
                             />
                             {errors.password && touched.password && (
                                 <Text style={styles.errorText}>{errors.password}</Text>
@@ -397,7 +407,14 @@ const SignupDetails = () => {
                                 value={values.Cnfpassword}
                                 onChangeText={handleChange('Cnfpassword')}
                                 onBlur={handleBlur('Cnfpassword')}
-                            // errorMessage={touched.Cnfpassword && errors.Cnfpassword ? errors.Cnfpassword : ''}
+                                secureTextEntry={!showPasswordCnf}
+                                rightAction={
+                                    <Icon
+                                        name={showPasswordCnf ? 'eye-off' : 'eye'}
+                                        type='Ionicon'
+                                        onPress={() => setShowPasswordCnf(!showPasswordCnf)}  
+                                    />
+                                }
                             />
                             {errors.Cnfpassword && touched.Cnfpassword && (
                                 <Text style={styles.errorText}>{errors.Cnfpassword}</Text>
@@ -455,6 +472,7 @@ const SignupDetails = () => {
                                 inputContainerStyle={{ ...styles.inputcontainer_sty }}
                                 inputStyle={{ ...styles.text_input, color: colors.secondaryFontColor }}
                                 placeholder='+91 5565442458'
+                                maxLength={10}
                             />
 
                             <Text style={{ ...styles.input_title, color: colors.secondaryFontColor }}>Business address</Text>
